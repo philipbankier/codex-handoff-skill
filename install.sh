@@ -2,38 +2,116 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLAUDE_DIR="$HOME/.claude"
 
-echo "Installing codex-handoff..."
+# --- Platform detection ---
 
-# Create target directories if they don't exist
-mkdir -p "$CLAUDE_DIR/commands"
-mkdir -p "$CLAUDE_DIR/skills"
+PLATFORM="${1:-}"
+INSTALL_CLAUDE=false
+INSTALL_OPENCLAW=false
 
-# Symlink the command
-if [ -L "$CLAUDE_DIR/commands/codex-handoff.md" ]; then
-  echo "Removing existing command symlink..."
-  rm "$CLAUDE_DIR/commands/codex-handoff.md"
-elif [ -f "$CLAUDE_DIR/commands/codex-handoff.md" ]; then
-  echo "Warning: $CLAUDE_DIR/commands/codex-handoff.md exists as a regular file."
-  echo "Back it up and remove it, then re-run install.sh"
-  exit 1
+detect_platforms() {
+  local found=false
+  if [ -d "$HOME/.claude" ]; then
+    INSTALL_CLAUDE=true
+    found=true
+  fi
+  # OpenClaw (check both current and legacy directory names)
+  if [ -d "$HOME/.openclaw" ] || [ -d "$HOME/.clawdbot" ]; then
+    INSTALL_OPENCLAW=true
+    found=true
+  fi
+  # Default to Claude Code if nothing detected
+  if [ "$found" = false ]; then
+    INSTALL_CLAUDE=true
+  fi
+}
+
+case "$PLATFORM" in
+  --platform=claude-code|--claude-code)
+    INSTALL_CLAUDE=true
+    ;;
+  --platform=openclaw|--openclaw)
+    INSTALL_OPENCLAW=true
+    ;;
+  --platform=all|--all)
+    INSTALL_CLAUDE=true
+    INSTALL_OPENCLAW=true
+    ;;
+  "")
+    detect_platforms
+    ;;
+  *)
+    echo "Usage: bash install.sh [--platform=claude-code|openclaw|all]"
+    exit 1
+    ;;
+esac
+
+# --- Helper ---
+
+link_skill() {
+  local target_dir="$1"
+  local skill_source="$SCRIPT_DIR/skills/codex-handoff"
+  local skill_dest="$target_dir/skills/codex-handoff"
+
+  mkdir -p "$target_dir/skills"
+
+  if [ -L "$skill_dest" ]; then
+    rm "$skill_dest"
+  elif [ -d "$skill_dest" ]; then
+    echo "  Warning: $skill_dest exists as a regular directory."
+    echo "  Back it up and remove it, then re-run install.sh"
+    return 1
+  fi
+
+  ln -s "$skill_source" "$skill_dest"
+  echo "  Linked skill: $skill_dest -> $skill_source"
+}
+
+link_command() {
+  local target_dir="$1"
+  local cmd_source="$SCRIPT_DIR/commands/codex-handoff.md"
+  local cmd_dest="$target_dir/commands/codex-handoff.md"
+
+  mkdir -p "$target_dir/commands"
+
+  if [ -L "$cmd_dest" ]; then
+    rm "$cmd_dest"
+  elif [ -f "$cmd_dest" ]; then
+    echo "  Warning: $cmd_dest exists as a regular file."
+    echo "  Back it up and remove it, then re-run install.sh"
+    return 1
+  fi
+
+  ln -s "$cmd_source" "$cmd_dest"
+  echo "  Linked command: $cmd_dest -> $cmd_source"
+}
+
+# --- Install ---
+
+if [ "$INSTALL_CLAUDE" = true ]; then
+  CLAUDE_DIR="$HOME/.claude"
+  echo "Installing codex-handoff for Claude Code..."
+  mkdir -p "$CLAUDE_DIR"
+  link_command "$CLAUDE_DIR"
+  link_skill "$CLAUDE_DIR"
+  echo ""
 fi
-ln -s "$SCRIPT_DIR/commands/codex-handoff.md" "$CLAUDE_DIR/commands/codex-handoff.md"
-echo "  Linked command: codex-handoff.md"
 
-# Symlink the skill directory
-if [ -L "$CLAUDE_DIR/skills/codex-handoff" ]; then
-  echo "Removing existing skill symlink..."
-  rm "$CLAUDE_DIR/skills/codex-handoff"
-elif [ -d "$CLAUDE_DIR/skills/codex-handoff" ]; then
-  echo "Warning: $CLAUDE_DIR/skills/codex-handoff exists as a regular directory."
-  echo "Back it up and remove it, then re-run install.sh"
-  exit 1
+if [ "$INSTALL_OPENCLAW" = true ]; then
+  # Prefer ~/.openclaw, fall back to ~/.clawdbot for legacy installs
+  if [ -d "$HOME/.openclaw" ]; then
+    OPENCLAW_DIR="$HOME/.openclaw"
+  elif [ -d "$HOME/.clawdbot" ]; then
+    OPENCLAW_DIR="$HOME/.clawdbot"
+  else
+    OPENCLAW_DIR="$HOME/.openclaw"
+  fi
+  echo "Installing codex-handoff for OpenClaw..."
+  mkdir -p "$OPENCLAW_DIR"
+  # OpenClaw uses skills only (no commands/ directory)
+  link_skill "$OPENCLAW_DIR"
+  echo ""
 fi
-ln -s "$SCRIPT_DIR/skills/codex-handoff" "$CLAUDE_DIR/skills/codex-handoff"
-echo "  Linked skill: codex-handoff/"
 
-echo ""
-echo "Done! codex-handoff is now available in Claude Code."
+echo "Done! codex-handoff is now available."
 echo "Usage: /codex-handoff [task description]"

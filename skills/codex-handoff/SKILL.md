@@ -1,6 +1,16 @@
 ---
-name: codex-handoff
-description: Use when offloading a finalized coding plan to Codex CLI for execution. Claude Code supervises and judges completion in a loop. Triggered by /codex-handoff or when user says "hand off to codex", "let codex do it", "offload to codex".
+name: Codex Handoff
+version: 1.0.0
+description: |
+  Offload finalized coding plans to Codex CLI for automated execution.
+  Use when: user says "hand off to codex", "let codex do it", "offload to codex",
+  runs /codex-handoff, or has a plan ready for Codex CLI execution.
+  Claude Code acts as supervisor/judge in a loop — Codex CLI does the coding.
+allowed-tools:
+  - Bash
+  - Read
+  - Glob
+  - Grep
 ---
 
 # Codex Handoff — Supervisor Loop
@@ -14,6 +24,23 @@ Claude Code is the **supervisor/judge**. Codex CLI is the **executor**. You orch
 - Codex CLI must be installed (`codex --version`)
 - A plan must exist (in `docs/plans/`, `.claude/plans/`, or provided inline)
 - The working directory should be a git repo (for diff-based review)
+
+## Quick Start
+
+1. **Locate** the plan (from `docs/plans/`, `.claude/plans/`, or user arguments)
+2. **Build** a structured Codex prompt with plan + project context + coding standards
+3. **Execute** Codex CLI in `--full-auto` mode
+4. **Review** git diff, run tests, audit plan completion with a scorecard
+5. **Decide** — loop with correction prompt if items remain, or finalize
+6. **Report** final status with completed/remaining items and test results
+
+## Reference
+
+| Task | Details |
+|------|---------|
+| Build Codex prompt | [prompt-templates.md](references/prompt-templates.md) |
+| Review & audit results | [review-process.md](references/review-process.md) |
+| Handle errors | [error-handling.md](references/error-handling.md) |
 
 ## Process
 
@@ -34,48 +61,13 @@ Once found:
 
 ### Step 2: BUILD THE CODEX PROMPT
 
-Create a structured prompt file at `/tmp/codex-handoff-{timestamp}.md`. The prompt must include:
-
-```markdown
-# Task
-
-You are executing a coding plan. Complete ALL items below. Do not skip any steps.
-
-## Plan
-
-{FULL PLAN CONTENT HERE}
-
-## Project Context
-
-- Working directory: {pwd}
-- Package manager: {npm/yarn/pnpm/bun — detect from lockfile}
-- Test command: {from package.json scripts or plan}
-- Build command: {from package.json scripts or plan}
-
-## Coding Standards
-
-{Contents of CLAUDE.md or .codex/AGENTS.md if they exist, otherwise omit}
-
-## Instructions
-
-1. Implement each plan item in order
-2. After each significant change, run the test command to verify
-3. Write clean, minimal code — follow existing patterns in the codebase
-4. Do NOT add unnecessary comments, docs, or abstractions beyond what the plan specifies
-5. When ALL items are complete and tests pass, output: CODEX_COMPLETE
-6. If you get stuck on an item, implement what you can and note what failed
-```
-
-Also collect:
-- Read `CLAUDE.md` if it exists (for coding standards)
-- Read `.codex/AGENTS.md` if it exists
-- Detect test/build commands from `package.json`
+See [prompt-templates.md](references/prompt-templates.md) for the full prompt template and context collection instructions.
 
 ### Step 3: EXECUTE CODEX
 
 Parse optional arguments from the user's command:
-- `--max-iterations N` → set max loop iterations (default: 5)
-- `--model MODEL` → pass to codex as `-m MODEL`
+- `--max-iterations N` — set max loop iterations (default: 5)
+- `--model MODEL` — pass to codex as `-m MODEL`
 
 Run Codex non-interactively:
 
@@ -88,107 +80,23 @@ If `--model` was specified:
 codex exec --full-auto -s workspace-write -m {MODEL} < /tmp/codex-handoff-{timestamp}.md
 ```
 
-**Important:**
-- Let the command run to completion — do NOT interrupt it
-- Capture both stdout and the exit code
-- This may take several minutes for large plans
+**Important:** Let the command run to completion. Capture both stdout and exit code. This may take several minutes for large plans.
 
 After Codex finishes, report to user: "Codex iteration {N} complete. Reviewing changes..."
 
 ### Step 4: REVIEW THE RESULTS
 
-After each Codex execution, perform a comprehensive review:
-
-**4a. Check what changed:**
-```bash
-git diff --stat
-git diff  # full diff for detailed review
-```
-
-**4b. Run tests:**
-- Run the project's test command (e.g., `npm test`, `npm run check`)
-- Run the build command if applicable
-- Capture pass/fail results
-
-**4c. Audit plan completion:**
-Go through each item in the plan and check:
-- Was the file created/modified as specified?
-- Does the implementation match what was planned?
-- Are there any obvious issues in the diff?
-
-Create a scorecard:
-- DONE items (implemented correctly)
-- PARTIAL items (started but incomplete or buggy)
-- MISSING items (not attempted)
-- ERRORS (test failures, build errors)
+See [review-process.md](references/review-process.md) for the full review checklist, scorecard format, and decision matrix.
 
 ### Step 5: DECIDE — LOOP OR COMPLETE
 
-**If ALL items DONE + tests pass:**
-- Move to Step 6 (Final Report)
-
-**If there are PARTIAL, MISSING, or ERROR items AND iterations < max:**
-Build a correction prompt and write to `/tmp/codex-handoff-correction-{timestamp}.md`:
-
-```markdown
-# Correction — Iteration {N+1}
-
-## What was completed successfully
-{list completed items}
-
-## What still needs to be done
-{list remaining items with specific instructions}
-
-## Errors to fix
-{test failures, build errors, or issues found in review}
-
-## Important
-- Focus ONLY on the remaining items — do not redo completed work
-- Run tests after each fix
-- When ALL remaining items are complete and tests pass, output: CODEX_COMPLETE
-```
-
-Then re-run:
-```bash
-codex exec --full-auto -s workspace-write < /tmp/codex-handoff-correction-{timestamp}.md
-```
-
-**If max iterations reached:**
-- Move to Step 6 with whatever was accomplished
+- **All items DONE + tests pass:** Move to Step 6.
+- **Items remain AND iterations < max:** Build a correction prompt (see [prompt-templates.md](references/prompt-templates.md)) and re-run Codex.
+- **Max iterations reached:** Move to Step 6 with whatever was accomplished.
 
 ### Step 6: FINAL REPORT
 
-Present to the user:
-
-```
-## Codex Handoff Complete
-
-Iterations: {N}
-Status: {COMPLETE | PARTIAL — X of Y items done}
-
-### Completed Items
-- [x] Item 1
-- [x] Item 2
-
-### Remaining Items (if any)
-- [ ] Item 3 — reason it wasn't completed
-
-### Test Results
-{pass/fail summary}
-
-### Changes Made
-{git diff --stat output}
-```
-
-If there are remaining items, suggest: "You can run `/codex-handoff` again to continue, or handle the remaining items manually."
-
-## Error Handling
-
-- **Codex not installed:** Tell user to install with `npm install -g @openai/codex`
-- **Codex exits with error:** Show the error output, ask user how to proceed
-- **No git repo:** Warn that review will be limited (no diff), but proceed anyway
-- **Tests not configured:** Skip test step, review based on diff only
-- **Codex hangs (>10min per iteration):** This is normal for large tasks — wait patiently
+See the report format in [review-process.md](references/review-process.md). If items remain, suggest: "You can run `/codex-handoff` again to continue, or handle the remaining items manually."
 
 ## Key Principles
 

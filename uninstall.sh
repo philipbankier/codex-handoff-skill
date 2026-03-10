@@ -1,25 +1,73 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CLAUDE_DIR="$HOME/.claude"
+# --- Platform detection ---
 
-echo "Uninstalling codex-handoff..."
+PLATFORM="${1:-}"
+UNINSTALL_CLAUDE=false
+UNINSTALL_OPENCLAW=false
 
-# Remove command symlink
-if [ -L "$CLAUDE_DIR/commands/codex-handoff.md" ]; then
-  rm "$CLAUDE_DIR/commands/codex-handoff.md"
-  echo "  Removed command symlink"
-else
-  echo "  Command symlink not found (skipping)"
+detect_platforms() {
+  if [ -L "$HOME/.claude/skills/codex-handoff" ] || [ -L "$HOME/.claude/commands/codex-handoff.md" ]; then
+    UNINSTALL_CLAUDE=true
+  fi
+  if [ -L "$HOME/.openclaw/skills/codex-handoff" ]; then
+    UNINSTALL_OPENCLAW=true
+  fi
+  if [ -L "$HOME/.clawdbot/skills/codex-handoff" ]; then
+    UNINSTALL_OPENCLAW=true
+  fi
+}
+
+case "$PLATFORM" in
+  --platform=claude-code|--claude-code)
+    UNINSTALL_CLAUDE=true
+    ;;
+  --platform=openclaw|--openclaw)
+    UNINSTALL_OPENCLAW=true
+    ;;
+  --platform=all|--all)
+    UNINSTALL_CLAUDE=true
+    UNINSTALL_OPENCLAW=true
+    ;;
+  "")
+    detect_platforms
+    ;;
+  *)
+    echo "Usage: bash uninstall.sh [--platform=claude-code|openclaw|all]"
+    exit 1
+    ;;
+esac
+
+# --- Helper ---
+
+remove_symlink() {
+  local path="$1"
+  if [ -L "$path" ]; then
+    rm "$path"
+    echo "  Removed: $path"
+  fi
+}
+
+# --- Uninstall ---
+
+if [ "$UNINSTALL_CLAUDE" = true ]; then
+  echo "Uninstalling codex-handoff from Claude Code..."
+  remove_symlink "$HOME/.claude/commands/codex-handoff.md"
+  remove_symlink "$HOME/.claude/skills/codex-handoff"
+  echo ""
 fi
 
-# Remove skill symlink
-if [ -L "$CLAUDE_DIR/skills/codex-handoff" ]; then
-  rm "$CLAUDE_DIR/skills/codex-handoff"
-  echo "  Removed skill symlink"
-else
-  echo "  Skill symlink not found (skipping)"
+if [ "$UNINSTALL_OPENCLAW" = true ]; then
+  echo "Uninstalling codex-handoff from OpenClaw..."
+  remove_symlink "$HOME/.openclaw/skills/codex-handoff"
+  remove_symlink "$HOME/.clawdbot/skills/codex-handoff"
+  echo ""
 fi
 
-echo ""
-echo "Done! codex-handoff has been removed from Claude Code."
+if [ "$UNINSTALL_CLAUDE" = false ] && [ "$UNINSTALL_OPENCLAW" = false ]; then
+  echo "No codex-handoff installation found."
+  exit 0
+fi
+
+echo "Done! codex-handoff has been removed."

@@ -1,0 +1,9 @@
+name: codex-handoff
+version: 1.0.0
+description: Offload coding plans to Codex CLI with automated supervisor loop
+author: Philip Bankier
+license: MIT
+skill_path: skills/codex-handoff
+platforms:
+  - claude-code
+  - openclaw

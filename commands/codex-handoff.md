@@ -1,5 +1,5 @@
 ---
-description: "Offload a finalized plan to Codex CLI for execution, with Claude Code as supervisor/judge loop"
+description: "Hand off a coding plan to Codex CLI for execution. Claude Code supervises, reviews diffs, and loops until complete."
 argument-hint: "[task description] [--max-iterations N] [--model MODEL]"
 ---
 
