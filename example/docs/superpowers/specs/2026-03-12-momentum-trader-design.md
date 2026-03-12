@@ -221,7 +221,11 @@ codex exec --full-auto -s read-only \
 - If only 1 source fires within the window: do NOT discard. Instead, downgrade to `conviction *= 0.5` and log "unconfirmed single-source event." This prevents silently dropping valid events when a second source is slow.
 - Require >= 2 unique sources for full conviction. Aggregate severity = mean, sentiment = engagement-weighted mean.
 
-**Signal output:** signal_id, timestamp, strategy: "fast", action, assets, conviction (severity/10 * confidence * source_count/5), event_context, ttl: 4h
+**Conviction formula:**
+- Multi-source (>= 2 sources): `conviction = severity/10 * confidence * min(source_count/3, 1.0)` — caps at 3 sources, scales linearly.
+- Single-source (corroboration window expired with 1 source): `conviction = severity/10 * confidence * 0.5` — the `source_count` factor is replaced by a flat 0.5 modifier, not compounded with it. This ensures high-severity single-source events (e.g., severity 9, confidence 0.9 = conviction 0.405) remain below the full-conviction threshold but above the discard threshold in Section 4d.
+
+**Signal output:** signal_id, timestamp, strategy: "fast", action, assets, conviction, event_context, ttl: 4h
 
 ### 4b. Momentum Signal Engine (Scheduled)
 
@@ -282,7 +286,7 @@ regime_score = (
 
 1. Fast conviction > 0.8 → ALWAYS takes precedence
 2. Fast conviction 0.5-0.8 → blended (agree = increase size, disagree = fast direction at 50% size)
-3. Fast conviction < 0.5 → discarded
+3. Fast conviction < 0.3 → discarded (threshold lowered from 0.5 to accommodate single-source events which max out around 0.45)
 4. `market_shock` severity >= 9 → global risk-off, reduce ALL positions by configurable % (default 50%)
 
 ---
@@ -370,7 +374,7 @@ Peak equity resets only after new all-time high sustained for 5 consecutive trad
 
 - Alpaca WebSocket for real-time fill updates
 - Slippage monitoring (fill price vs expected)
-- Partial fill handling: if fill ratio < 50% after 60 seconds, cancel remainder and treat the partial as the full position (counts against hard limits at filled quantity). If fill ratio >= 50%, hold and treat as complete at filled size. Log all partial fills with expected vs actual quantity.
+- Partial fill handling: if fill ratio < 50% after 60 seconds, cancel remainder and treat the partial as the full position (counts against hard limits at filled quantity). If fill ratio >= 50%, hold and treat as complete at filled size. After accepting a partial fill as complete, no top-up or replacement order is issued for the remaining quantity of that signal. Log all partial fills with expected vs actual quantity.
 - 5-minute reconciliation against Alpaca account state
 
 ### 6c. Alerting
@@ -403,7 +407,7 @@ Transport: HTTP POST to configurable webhook URLs.
 
 | Table | Key Columns |
 |---|---|
-| `raw_prices` | timestamp, ticker, open, high, low, close, volume, rsi_14, ema_12, ema_26, macd, bb_upper, bb_lower, atr_14. Partitioned by date. |
+| `raw_prices` | timestamp, date (derived from timestamp, used as partition key), ticker, open, high, low, close, volume, rsi_14, ema_12, ema_26, macd, bb_upper, bb_lower, atr_14. Partitioned by `date`. |
 | `raw_news` | id, timestamp, headline, summary, source, source_tier, related_tickers[], url |
 | `raw_social` | id, timestamp, text, source (twitter/reddit), subreddit, likes, retweets, replies, engagement_weight |
 | `events` | event_id, timestamp, source_item_ids[], event_type, severity, affected_assets[], affected_sectors[], direction, confidence, reasoning, nlp_model_version |
