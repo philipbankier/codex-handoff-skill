@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-03-12
+
+### Added
+- Phased execution for multi-phase plans (auto-detected from `## Phase N:` headings)
+- Phase-scoped Codex prompts with previous-phase context summaries
+- Per-phase scorecards and aggregated final report
+- `--phase N` flag to execute or re-run a specific phase only
+- Phase correction prompts scoped to current phase items
+
+### Changed
+- `--max-iterations` now applies per-phase in phased mode
+- Example plan updated to demonstrate multi-phase format
+- README expanded with Phased Execution section
+
 ## [1.0.0] - 2026-03-10
 
 ### Added

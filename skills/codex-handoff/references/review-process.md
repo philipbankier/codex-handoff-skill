@@ -66,3 +66,63 @@ Status: {COMPLETE | PARTIAL — X of Y items done}
 ```
 
 If there are remaining items, suggest: "You can run `/codex-handoff` again to continue, or handle the remaining items manually."
+
+## Phased Execution Review
+
+When executing a multi-phase plan, the review process is scoped per-phase.
+
+### Per-Phase Scorecard
+
+The scorecard covers only the current phase's items. After a phase completes (all items DONE + tests pass), record a **phase summary**:
+
+```
+Phase {N}: {title}
+Status: COMPLETE
+Iterations: {M}
+Files changed: {list of files created/modified}
+Key changes: {1-2 sentence summary}
+```
+
+This summary is fed as context to the next phase's Codex prompt (see [prompt-templates.md](prompt-templates.md) "Completed Phases" section).
+
+### Per-Phase Decision Matrix
+
+**All phase items DONE + tests pass:** Record phase summary, advance to next phase.
+
+**Items remain AND iterations < max (per-phase):** Build a phase correction prompt and re-run Codex.
+
+**Max iterations reached for this phase:** Ask user:
+- "Phase {N} incomplete after {max} iterations. Continue to Phase {N+1}, or stop here?"
+- Record partial phase summary either way.
+
+### Phased Final Report Format
+
+```
+## Codex Handoff Complete
+
+Phases: {completed}/{total}
+Total iterations: {sum across all phases}
+
+### Phase 1: {title} — COMPLETE (2 iterations)
+- [x] Item 1.1
+- [x] Item 1.2
+
+### Phase 2: {title} — COMPLETE (1 iteration)
+- [x] Item 2.1
+- [x] Item 2.2
+
+### Phase 3: {title} — PARTIAL (3/5 items, max iterations reached)
+- [x] Item 3.1
+- [x] Item 3.2
+- [x] Item 3.3
+- [ ] Item 3.4 — reason
+- [ ] Item 3.5 — reason
+
+### Test Results
+{pass/fail summary}
+
+### Changes Made
+{git diff --stat output}
+```
+
+If phases remain incomplete, suggest: "You can run `/codex-handoff --phase N` to retry a specific phase, or handle the remaining items manually."

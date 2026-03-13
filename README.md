@@ -1,7 +1,7 @@
 # codex-handoff
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](CHANGELOG.md)
 [![Claude Code](https://img.shields.io/badge/platform-Claude%20Code-blueviolet.svg)](https://docs.anthropic.com/en/docs/claude-code)
 [![OpenClaw](https://img.shields.io/badge/platform-OpenClaw-orange.svg)](https://github.com/openclaw)
 
@@ -38,13 +38,14 @@ Works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Op
 ### The Loop
 
 1. **Locate** -- Agent finds your plan (from `docs/plans/`, `.claude/plans/`, or inline)
-2. **Build prompt** -- Constructs a structured prompt with plan, project context, and coding standards
-3. **Execute** -- Runs Codex CLI in `--full-auto` mode
-4. **Review** -- Agent reviews the git diff, runs tests, audits plan completion with a scorecard
-5. **Decide** -- If items remain and iterations are under the limit, builds a correction prompt and loops back to step 3
-6. **Report** -- Presents final status with completed/remaining items and test results
+2. **Detect phases** -- Scans for phase headings (`## Phase 1:`, etc.). If found, executes phase-by-phase. If not, runs as a single pass.
+3. **Build prompt** -- Constructs a structured prompt with plan (or current phase) + project context + coding standards
+4. **Execute** -- Runs Codex CLI in `--full-auto` mode
+5. **Review** -- Agent reviews the git diff, runs tests, audits plan completion with a scorecard
+6. **Decide** -- If items remain and iterations are under the limit, builds a correction prompt and loops back to step 4. In phased mode, advances to next phase when current phase passes.
+7. **Report** -- Presents final status with completed/remaining items and test results
 
-Default max iterations: **5**
+Default max iterations: **5** (per phase in phased mode)
 
 ## Compatibility
 
@@ -102,6 +103,7 @@ bash uninstall.sh --platform=openclaw     # remove from OpenClaw only
 /codex-handoff add auth to the API      # finds/uses a relevant plan
 /codex-handoff --max-iterations 3       # limit retry loops
 /codex-handoff --model o4-mini          # specify Codex model
+/codex-handoff --phase 2                # re-run only phase 2
 ```
 
 ### Conversational triggers (both platforms)
@@ -123,8 +125,27 @@ See [`resources/example-plan.md`](resources/example-plan.md) for the expected pl
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--max-iterations N` | `5` | Maximum supervisor loop iterations |
+| `--max-iterations N` | `5` | Maximum supervisor loop iterations (per phase in phased mode) |
 | `--model MODEL` | Codex default | Model for Codex CLI to use (e.g., `o4-mini`) |
+| `--phase N` | All phases | Execute only phase N (for re-running a specific phase) |
+
+## Phased Execution
+
+For large plans with distinct phases, codex-handoff automatically detects phase headings and executes one phase at a time. This is fully dynamic -- no configuration needed.
+
+**Auto-detected phase headings:**
+- `## Phase 1: Backend`, `## Phase 2: Frontend`
+- `## Stage 1: Setup`, `## Stage 2: Implementation`
+- `## Part 1: Core`, `## Part 2: Extensions`
+- `## 1. Backend`, `## 2. Frontend`
+
+**Why phased execution?**
+- Each phase gets a focused prompt (no wasted context on future phases)
+- Dependencies between phases are respected (Phase 2 runs after Phase 1's files exist)
+- Per-phase scorecards give clearer progress tracking
+- Failed phases can be re-run individually with `--phase N`
+
+Plans without phase headings run in single-pass mode, exactly as before.
 
 ## How It Finds Your Plan
 

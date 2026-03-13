@@ -1,6 +1,6 @@
 ---
 description: "Hand off a coding plan to Codex CLI for execution. Claude Code supervises, reviews diffs, and loops until complete."
-argument-hint: "[task description] [--max-iterations N] [--model MODEL]"
+argument-hint: "[task description] [--max-iterations N] [--model MODEL] [--phase N]"
 ---
 
 # Codex Handoff
