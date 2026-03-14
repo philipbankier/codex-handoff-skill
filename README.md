@@ -1,7 +1,7 @@
 # codex-handoff
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](CHANGELOG.md)
 [![Claude Code](https://img.shields.io/badge/platform-Claude%20Code-blueviolet.svg)](https://docs.anthropic.com/en/docs/claude-code)
 [![OpenClaw](https://img.shields.io/badge/platform-OpenClaw-orange.svg)](https://github.com/openclaw)
 
@@ -147,6 +147,17 @@ For large plans with distinct phases, codex-handoff automatically detects phase 
 
 Plans without phase headings run in single-pass mode, exactly as before.
 
+## Examples
+
+### Quick Walkthrough
+See [`examples/simple/`](examples/simple/) for a complete annotated transcript
+showing every step of the codex-handoff loop on a small project.
+
+### Advanced: Multi-Phase Plan
+See [`examples/advanced-momentum-trader/`](examples/advanced-momentum-trader/)
+for a real-world multi-phase plan demonstrating phased execution on a
+complex trading system.
+
 ## How It Finds Your Plan
 
 Searched in order:
@@ -175,6 +186,14 @@ codex-handoff/
 │       ├── prompt-templates.md            # Codex prompt construction
 │       ├── review-process.md              # Review & scorecard logic
 │       └── error-handling.md              # Error handling & troubleshooting
+├── examples/
+│   ├── simple/                            # Quick walkthrough (annotated transcript)
+│   │   ├── README.md
+│   │   └── plan.md
+│   └── advanced-momentum-trader/          # Complex real-world example
+│       ├── README.md
+│       ├── design-spec.md
+│       └── plan-phase1-foundation.md
 ├── resources/example-plan.md              # Example plan format
 ├── scripts/verify-install.sh              # Installation diagnostic
 ├── install.sh                             # Multi-platform installer
