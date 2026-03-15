@@ -189,7 +189,8 @@ codex-handoff/
 ├── examples/
 │   ├── simple/                            # Quick walkthrough (annotated transcript)
 │   │   ├── README.md
-│   │   └── plan.md
+│   │   ├── plan.md
+│   │   └── output/                       # Actual code Codex produced
 │   └── advanced-momentum-trader/          # Complex real-world example
 │       ├── README.md
 │       ├── design-spec.md

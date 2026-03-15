@@ -35,7 +35,7 @@
 - [ ] **Step 1: Initialize the project with uv**
 
 ```bash
-cd /Users/philipbankier/Development/OSS/codex-handoff/example
+cd momentum-trader
 uv init momentum-trader
 cd momentum-trader
 ```

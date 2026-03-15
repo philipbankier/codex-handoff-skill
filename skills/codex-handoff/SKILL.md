@@ -1,6 +1,6 @@
 ---
 name: Codex Handoff
-version: 1.1.0
+version: 1.1.1
 description: |
   Offload finalized coding plans to Codex CLI for automated execution.
   Use when: user says "hand off to codex", "let codex do it", "offload to codex",

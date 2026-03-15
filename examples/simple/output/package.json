@@ -1,0 +1,21 @@
+{
+  "name": "codex-handoff-demo-linkchecker",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "test": "vitest run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^25.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
