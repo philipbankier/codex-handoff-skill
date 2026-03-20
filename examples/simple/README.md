@@ -2,6 +2,8 @@
 
 This is a real captured transcript of codex-handoff executing a plan end-to-end. Every output shown below — the Codex CLI logs, git diffs, test results, and scorecard — was captured from an actual execution on 2026-03-14.
 
+The plan was created using [superpowers](https://github.com/obra/superpowers) `/writing-plans` and then handed off with "hand it off to codex" — the typical workflow for using codex-handoff. The brainstorming and planning happens in your agent, and once the plan is solid, one phrase kicks off the automated execution loop.
+
 The plan builds a simple Node.js CLI tool that checks markdown files for broken links. See [`plan.md`](plan.md) for the full plan — 5 items, no phases, single-pass mode. The complete source code Codex produced is in [`output/`](output/).
 
 ---
