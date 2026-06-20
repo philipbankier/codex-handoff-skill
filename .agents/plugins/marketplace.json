@@ -3,7 +3,11 @@
   "plugins": [
     {
       "name": "codex-handoff-codex",
-      "path": "../../plugins/codex-handoff-codex"
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-handoff-codex"
+      },
+      "category": "Developer Tools"
     }
   ]
 }
