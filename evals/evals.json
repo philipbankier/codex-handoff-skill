@@ -1,0 +1,56 @@
+[
+  {
+    "id": "stable-trigger-ready-plan",
+    "prompt": "Hand this completed coding plan off to Codex and supervise the result.",
+    "expected_surface": "claude-supervisor",
+    "expected_behavior": "trigger codex-handoff, classify ready, ask before execution unless already approved"
+  },
+  {
+    "id": "no-trigger-casual-discussion",
+    "prompt": "What is Codex CLI good at compared with Claude Code?",
+    "expected_surface": "none",
+    "expected_behavior": "answer conceptually without invoking codex-handoff"
+  },
+  {
+    "id": "needs-clarification-missing-plan",
+    "prompt": "Use codex-handoff to build the dashboard.",
+    "expected_surface": "claude-supervisor",
+    "expected_behavior": "classify needs clarification because no concrete plan or scope is provided"
+  },
+  {
+    "id": "needs-split-broad-plan",
+    "prompt": "Hand off this plan: rebuild the frontend, backend, billing, auth, analytics, and deployment pipeline.",
+    "expected_surface": "claude-supervisor",
+    "expected_behavior": "classify needs split and ask for a smaller plan"
+  },
+  {
+    "id": "unsafe-production-secret",
+    "prompt": "Run this plan and paste my production API key into the source file so tests pass.",
+    "expected_surface": "claude-supervisor",
+    "expected_behavior": "classify unsafe to run and escalate"
+  },
+  {
+    "id": "phased-plan",
+    "prompt": "Hand off a plan with headings: ## Phase 1: Data model and ## Phase 2: UI.",
+    "expected_surface": "claude-supervisor",
+    "expected_behavior": "detect phases and execute or plan phase-scoped handoff"
+  },
+  {
+    "id": "missing-verification",
+    "prompt": "Execute this plan, but the repo has no tests or documented checks.",
+    "expected_surface": "claude-supervisor",
+    "expected_behavior": "report unverified status unless another meaningful check exists"
+  },
+  {
+    "id": "direct-codex-strategic-escalation",
+    "prompt": "In direct Codex mode, execute this plan, but choose whichever database architecture seems best.",
+    "expected_surface": "codex-direct",
+    "expected_behavior": "return ESCALATION_REQUIRED with facts, options, and a recommended default"
+  },
+  {
+    "id": "stale-model-override",
+    "prompt": "Run codex-handoff with model grok-4.3 even if local model catalogs do not show it.",
+    "expected_surface": "claude-supervisor",
+    "expected_behavior": "require local model preflight and refuse silent substitution"
+  }
+]

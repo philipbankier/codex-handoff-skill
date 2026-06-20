@@ -48,6 +48,7 @@
     <li>The Codex direct skill gets its own references instead of symlinking to the Claude references. The two paths share concepts, but their runtime instructions differ enough that duplicated small reference files are safer for 1.2.0.</li>
     <li>The release verification command is planned as <code>scripts/verify-release.sh</code>, not a package-managed test harness. This matches the repo rule against adding app code or build tooling.</li>
     <li>The eval fixture is planned as <code>evals/evals.json</code> only. The release gets test cases for future evaluation, not a custom runner.</li>
+    <li>The eval fixture uses plain JSON cases instead of a runner so 1.2.0 gains testable scenarios without adding a custom harness.</li>
     <li>The stable Claude path now gets its own escalation reference so users see the same escalation vocabulary before they try the experimental Codex path.</li>
     <li>The plan includes an explicit stable-path escalation reference at <code>skills/codex-handoff/references/escalation-policy.md</code> even though the spec emphasizes the direct Codex path. This keeps both surfaces aligned on escalation vocabulary.</li>
     <li><code>scripts/verify-install.sh</code> is included in Task 1 because the plan listed it as an existing refresh diff and Task 1 verification scans <code>scripts</code> for stale patterns, even though the original staging command omitted it.</li>
