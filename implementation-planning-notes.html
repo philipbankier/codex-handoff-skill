@@ -57,6 +57,10 @@
     <li>Task 6 stores final release evidence in <code>docs/releases/1.2.0-verification.md</code> so reviewers can see exact command exits and concrete verification limits without rerunning the full checklist.</li>
     <li>Task 6 treats ASCII normalization as mechanical cleanup across tracked scanned files. The broad stale-literal scan still reports the untracked release plan under <code>docs/superpowers/plans/</code>, which is outside the allowed edit scope.</li>
     <li>Philip approved treating <code>docs/superpowers/plans/</code> as off-limits planning input rather than release output for the final stale-literal scan.</li>
+    <li>The pre-merge audit follow-up promotes install-verifier regression checks and Codex plugin install smoke into <code>scripts/verify-release.sh</code> because release evidence should not rely on one-off manual proof.</li>
+    <li>The canonical GitHub repository for docs and plugin metadata is <code>philipbankier/codex-handoff-skill</code>; the old <code>philipbankier/codex-handoff</code> URL redirects but is treated as stale release metadata.</li>
+    <li>The install verifier now treats a detected OpenClaw config directory with no codex-handoff skill as a failure, while keeping the no-OpenClaw-detected case as a non-failing skip.</li>
+    <li>The release verifier distinguishes <code>rg</code> exit code <code>1</code> for no matches from other scan errors so stale-pattern and secret scans cannot pass on tool failure.</li>
   </ul>
 
   <h2>Deviations From The Spec</h2>
@@ -74,14 +78,14 @@
     <li>A shell release verifier is less expressive than a Node or Python tool, but keeps the repository aligned with its current shell-script conventions.</li>
     <li>The release verifier uses <code>python3 -m json.tool</code> for JSON validation because the repo has no package manager and should not add one for 1.2.0.</li>
     <li>Deferring Claude plugin packaging keeps 1.2.0 focused. The symlink install already covers Claude Code, while Codex plugin packaging is the new release surface.</li>
+    <li>The release verifier now requires the Codex CLI for plugin smoke testing. That makes the release gate less portable, but matches the release claim that the Codex plugin is ready to install.</li>
   </ul>
 
   <h2>Open Questions</h2>
   <ul>
     <li>Whether the final release should commit the already-untracked <code>AGENTS.md</code>. The plan leaves it untouched unless the user explicitly approves adding it.</li>
-    <li>Whether to push the feature branch and open a PR after implementation. The current plan stops at local verification and commit-ready status.</li>
+    <li>Whether to open a PR after the pre-merge audit fix lands. The fix commit will stay on the feature branch; PR creation remains a separate step unless requested.</li>
     <li>Whether to add Claude plugin packaging in a later release. The plan explicitly defers it from 1.2.0.</li>
-    <li>The final release evidence file has been updated with Task 6 command exits and known verification limits.</li>
   </ul>
 </body>
 </html>

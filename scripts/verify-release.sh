@@ -42,6 +42,102 @@ check_frontmatter() {
   fi
 }
 
+run_install_verifier_smoke() {
+  tmp_home="$(mktemp -d)"
+  verify_log="$tmp_home/verify-install-negative.log"
+  mkdir -p "$tmp_home/.claude/skills" "$tmp_home/.claude/commands"
+
+  if HOME="$tmp_home" bash scripts/verify-install.sh >"$verify_log" 2>&1; then
+    fail "verify-install returned zero with missing Claude links"
+  elif grep -q "skill not installed" "$verify_log" \
+    && grep -q "command not installed" "$verify_log"; then
+    ok "verify-install fails when required Claude links are missing"
+  else
+    fail "verify-install negative case did not report missing Claude links"
+  fi
+
+  rm -rf "$tmp_home"
+  tmp_home="$(mktemp -d)"
+
+  if HOME="$tmp_home" bash install.sh --platform=all >/dev/null 2>&1; then
+    ok "temp install --platform=all"
+  else
+    fail "temp install --platform=all"
+    rm -rf "$tmp_home"
+    return
+  fi
+
+  if HOME="$tmp_home" bash scripts/verify-install.sh >/dev/null 2>&1; then
+    ok "verify-install passes after temp install"
+  else
+    fail "verify-install after temp install"
+  fi
+
+  if HOME="$tmp_home" bash uninstall.sh --platform=all >/dev/null 2>&1; then
+    if [ -L "$tmp_home/.claude/skills/codex-handoff" ] \
+      || [ -L "$tmp_home/.claude/commands/codex-handoff.md" ] \
+      || [ -L "$tmp_home/.openclaw/skills/codex-handoff" ]; then
+      fail "temp uninstall left codex-handoff symlinks"
+    else
+      ok "temp uninstall removes symlinks"
+    fi
+  else
+    fail "temp uninstall --platform=all"
+  fi
+
+  rm -rf "$tmp_home"
+}
+
+run_codex_plugin_smoke() {
+  if ! command -v codex >/dev/null 2>&1; then
+    fail "codex missing; cannot verify plugin install"
+    return
+  fi
+
+  tmp_codex_home="$(mktemp -d)"
+  plugin_list="$tmp_codex_home/plugin-list.json"
+
+  if CODEX_HOME="$tmp_codex_home" codex plugin marketplace add ./ >/dev/null 2>&1; then
+    ok "Codex plugin marketplace add"
+  else
+    fail "Codex plugin marketplace add"
+    rm -rf "$tmp_codex_home"
+    return
+  fi
+
+  if CODEX_HOME="$tmp_codex_home" codex plugin add codex-handoff-codex@codex-handoff-local --json >/dev/null 2>&1; then
+    ok "Codex plugin add"
+  else
+    fail "Codex plugin add"
+    rm -rf "$tmp_codex_home"
+    return
+  fi
+
+  if CODEX_HOME="$tmp_codex_home" codex plugin list --json >"$plugin_list" 2>/dev/null \
+    && python3 - "$plugin_list" "$VERSION" <<'PY'
+import json
+import sys
+
+path, version = sys.argv[1], sys.argv[2]
+data = json.load(open(path, encoding="utf-8"))
+for plugin in data.get("installed", []):
+    if (
+        plugin.get("pluginId") == "codex-handoff-codex@codex-handoff-local"
+        and plugin.get("version") == version
+        and plugin.get("enabled") is True
+    ):
+        sys.exit(0)
+sys.exit(1)
+PY
+  then
+    ok "Codex plugin list shows ${VERSION} enabled"
+  else
+    fail "Codex plugin list missing enabled ${VERSION} install"
+  fi
+
+  rm -rf "$tmp_codex_home"
+}
+
 echo "codex-handoff release verification"
 echo "==================================="
 
@@ -100,20 +196,42 @@ complete_token_suffix="COMPLETE"
 codex_dir="\\.codex"
 agents_file="AGENTS"
 stale_pattern="${flag_prefix}-${flag_suffix}|${model_prefix}-${model_suffix}|${npm_install} ${global_flag}|${codex_token_prefix}_${complete_token_suffix}|${phase_token_prefix}_${complete_token_suffix}|${codex_dir}/${agents_file}"
+stale_files="$(mktemp)"
+stale_output="$(mktemp)"
+git ls-files README.md CHANGELOG.md openclaw.yaml commands scripts skills plugins evals docs examples implementation-planning-notes.html >"$stale_files"
 
-if rg -n "$stale_pattern" \
-  README.md skills/codex-handoff commands scripts plugins evals examples/simple/README.md; then
+if xargs rg -n "$stale_pattern" <"$stale_files" >"$stale_output"; then
+  cat "$stale_output"
   fail "stale workflow pattern found"
 else
-  ok "stale workflow pattern scan"
+  stale_rc=$?
+  if [ "$stale_rc" -eq 1 ]; then
+    ok "stale workflow pattern scan"
+  else
+    cat "$stale_output"
+    fail "stale workflow pattern scan errored"
+  fi
 fi
+rm -f "$stale_files" "$stale_output"
 
+secret_output="$(mktemp)"
 if rg -n "(BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,})" \
-  README.md CHANGELOG.md openclaw.yaml commands scripts skills plugins evals docs examples; then
+  README.md CHANGELOG.md openclaw.yaml commands scripts skills plugins evals docs examples >"$secret_output"; then
+  cat "$secret_output"
   fail "possible secret pattern found"
 else
-  ok "secret pattern scan"
+  secret_rc=$?
+  if [ "$secret_rc" -eq 1 ]; then
+    ok "secret pattern scan"
+  else
+    cat "$secret_output"
+    fail "secret pattern scan errored"
+  fi
 fi
+rm -f "$secret_output"
+
+run_install_verifier_smoke
+run_codex_plugin_smoke
 
 echo "==================================="
 if [ "$errors" -eq 0 ]; then

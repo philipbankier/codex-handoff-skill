@@ -5,8 +5,8 @@
   "author": {
     "name": "Philip Bankier"
   },
-  "homepage": "https://github.com/philipbankier/codex-handoff",
-  "repository": "https://github.com/philipbankier/codex-handoff",
+  "homepage": "https://github.com/philipbankier/codex-handoff-skill",
+  "repository": "https://github.com/philipbankier/codex-handoff-skill",
   "license": "MIT",
   "keywords": [
     "codex",
@@ -28,9 +28,9 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/philipbankier/codex-handoff",
-    "privacyPolicyURL": "https://github.com/philipbankier/codex-handoff/blob/main/LICENSE",
-    "termsOfServiceURL": "https://github.com/philipbankier/codex-handoff/blob/main/LICENSE",
+    "websiteURL": "https://github.com/philipbankier/codex-handoff-skill",
+    "privacyPolicyURL": "https://github.com/philipbankier/codex-handoff-skill/blob/main/LICENSE",
+    "termsOfServiceURL": "https://github.com/philipbankier/codex-handoff-skill/blob/main/LICENSE",
     "defaultPrompt": [
       "Run this coding plan with Codex Handoff direct mode."
     ],

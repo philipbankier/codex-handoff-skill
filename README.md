@@ -16,7 +16,7 @@ Works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code). OpenCl
 1. Install codex-handoff:
 
 ```bash
-git clone https://github.com/philipbankier/codex-handoff.git
+git clone https://github.com/philipbankier/codex-handoff-skill.git
 cd codex-handoff
 bash install.sh
 ```
@@ -41,12 +41,12 @@ Claude Code checks that the plan is ready, captures the pre-run baseline, sends 
 
 The easy path is to give this repo URL to Claude Code or OpenClaw and ask it to install:
 
-> "Install and set up https://github.com/philipbankier/codex-handoff"
+> "Install and set up https://github.com/philipbankier/codex-handoff-skill"
 
 Manual install:
 
 ```bash
-git clone https://github.com/philipbankier/codex-handoff.git
+git clone https://github.com/philipbankier/codex-handoff-skill.git
 cd codex-handoff
 bash install.sh
 ```

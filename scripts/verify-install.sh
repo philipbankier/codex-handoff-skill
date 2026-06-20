@@ -72,6 +72,7 @@ for dir in "$HOME/.openclaw" "$HOME/.clawdbot"; do
       fi
     else
       echo "  [--] skill not installed in $dir"
+      errors=$((errors + 1))
     fi
   fi
 done
@@ -86,4 +87,5 @@ if [ "$errors" -eq 0 ]; then
   echo "All checks passed."
 else
   echo "$errors issue(s) found."
+  exit 1
 fi
