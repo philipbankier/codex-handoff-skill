@@ -1,0 +1,39 @@
+{
+  "name": "codex-handoff-codex",
+  "version": "1.2.0",
+  "description": "Experimental direct Codex execution workflow for ready coding plans, with readiness gates, evidence review, and escalation criteria.",
+  "author": {
+    "name": "Philip Bankier"
+  },
+  "homepage": "https://github.com/philipbankier/codex-handoff",
+  "repository": "https://github.com/philipbankier/codex-handoff",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "handoff",
+    "plans",
+    "agent-skills",
+    "verification",
+    "escalation"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Handoff",
+    "shortDescription": "Execute ready coding plans directly in Codex with escalation gates",
+    "longDescription": "Use Codex Handoff direct mode to locate or accept a coding plan, verify readiness, execute scoped changes in Codex, run checks, review evidence, and escalate strategic blockers with facts, options, and a recommended default.",
+    "developerName": "Philip Bankier",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/philipbankier/codex-handoff",
+    "privacyPolicyURL": "https://github.com/philipbankier/codex-handoff/blob/main/LICENSE",
+    "termsOfServiceURL": "https://github.com/philipbankier/codex-handoff/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Run this coding plan with Codex Handoff direct mode."
+    ],
+    "screenshots": []
+  }
+}

@@ -64,6 +64,7 @@
   <h2>Tradeoffs</h2>
   <ul>
     <li>Separate Codex and Claude skill trees create some duplication, but avoid runtime confusion and make each skill readable by the agent that will actually execute it.</li>
+    <li>The Codex plugin duplicates some stable-path references because direct Codex execution must not inherit Claude supervisor wording or call <code>codex exec</code> recursively.</li>
     <li>A small eval fixture is less powerful than a real harness, but avoids adding a dependency surface to an instruction/script repository.</li>
     <li>A shell release verifier is less expressive than a Node or Python tool, but keeps the repository aligned with its current shell-script conventions.</li>
     <li>Deferring Claude plugin packaging keeps 1.2.0 focused. The symlink install already covers Claude Code, while Codex plugin packaging is the new release surface.</li>

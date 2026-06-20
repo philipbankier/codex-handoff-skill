@@ -1,0 +1,9 @@
+{
+  "name": "codex-handoff-local",
+  "plugins": [
+    {
+      "name": "codex-handoff-codex",
+      "path": "../../plugins/codex-handoff-codex"
+    }
+  ]
+}
