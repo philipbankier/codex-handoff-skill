@@ -35,7 +35,7 @@ The agent constructs a structured prompt combining the plan with project context
 
 > **Claude Code:**
 >
-> Built prompt → `/tmp/codex-handoff-prompt-1.md` (1.6 KB)
+> Built prompt in a temporary markdown file (1.6 KB)
 
 The actual prompt sent to Codex:
 
@@ -95,7 +95,7 @@ You are executing a coding plan. Complete ALL items below. Do not skip any steps
 2. After each significant change, run the test command to verify
 3. Write clean, minimal code — follow existing patterns in the codebase
 4. Do NOT add unnecessary comments, docs, or abstractions beyond what the plan specifies
-5. When ALL items are complete and tests pass, output: CODEX_COMPLETE
+5. When ALL items are complete and tests pass, report exact verification evidence
 6. If you get stuck on an item, implement what you can and note what failed
 ```
 
@@ -103,25 +103,13 @@ You are executing a coding plan. Complete ALL items below. Do not skip any steps
 
 ## Step 3: Codex Executes
 
-The agent runs Codex CLI in full-auto mode:
+The supervisor runs Codex CLI with an explicit working directory and workspace-write sandbox:
 
-> **Claude Code:**
->
-> Running: `codex exec --full-auto -s workspace-write < /tmp/codex-handoff-prompt-1.md`
-
-Codex starts up and reports its configuration:
-
+```bash
+codex exec -C "/private/tmp/codex-handoff-demo-linkchecker" --sandbox workspace-write < "$prompt_file"
 ```
-OpenAI Codex v0.114.0 (research preview)
---------
-workdir: /private/tmp/codex-handoff-demo-linkchecker
-model: gpt-5.4
-provider: openai
-approval: never
-sandbox: workspace-write [workdir, /tmp, $TMPDIR]
-reasoning effort: xhigh
---------
-```
+
+The captured transcript was produced with an older Codex CLI. The important behavior for 1.2.0 is the supervisor loop: scoped prompt, sandboxed execution, diff review, verification evidence, and correction only when remaining work is mechanical.
 
 Codex begins working through the plan. Here's the key narrative from its execution:
 
@@ -210,8 +198,6 @@ Plan update
   ✓ Inspect workspace and initialize npm + TypeScript config
   ✓ Implement link checker and CLI with colored output
   ✓ Add Vitest tests and verify after each major change
-
-CODEX_COMPLETE
 ```
 
 Codex used **56,259 tokens** and completed in a single pass.

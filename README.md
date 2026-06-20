@@ -70,6 +70,27 @@ Prerequisites:
 
 Use the [official Codex CLI install docs](https://developers.openai.com/codex/cli) for current install and upgrade methods.
 
+## Experimental Codex Plugin Install
+
+`1.2.0` includes an experimental Codex-native plugin for direct execution.
+
+Use this path when you want Codex itself to locate or accept a plan, execute scoped changes in its sandbox, run checks, review evidence, and escalate strategic blockers.
+
+```bash
+codex plugin marketplace add ./
+```
+
+Check your installed Codex CLI help before relying on plugin commands:
+
+```bash
+codex plugin --help
+codex plugin marketplace --help
+```
+
+Direct Codex mode is autonomous for routine scoped work. It must stop with `ESCALATION_REQUIRED` when assumptions are overturned, scope expands, credentials are missing, verification cannot prove completion, or strategic choices appear.
+
+If your Codex CLI uses a different plugin command shape, follow `codex plugin marketplace --help` and keep the same local repository root as the marketplace source.
+
 ## Verify / Uninstall
 
 ```bash
@@ -131,11 +152,12 @@ No executor note is a pass condition. Claude Code owns the final decision.
 
 ## Compatibility
 
-| Platform    | Status                                  | Skill | Slash Command     | Install Path  |
-|-------------|-----------------------------------------|-------|-------------------|---------------|
-| Claude Code | Primary workflow                        | Yes   | `/codex-handoff`  | `~/.claude/`  |
-| OpenClaw    | Skill files and manifest are included   | Yes   | Description match | `~/.openclaw/` |
-| Codex CLI   | Required executor, installed separately | N/A   | N/A               | User PATH     |
+| Platform     | Status                                  | Skill | Slash Command     | Install Path               |
+|--------------|-----------------------------------------|-------|-------------------|----------------------------|
+| Claude Code  | Stable supervisor workflow              | Yes   | `/codex-handoff`  | `~/.claude/`               |
+| OpenClaw     | Existing skill files and manifest       | Yes   | Description match | `~/.openclaw/`             |
+| Codex plugin | Experimental direct execution workflow  | Yes   | N/A               | local plugin marketplace   |
+| Codex CLI    | Required executor for stable path       | N/A   | N/A               | User PATH                  |
 
 ## Configuration
 
