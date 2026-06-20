@@ -1,10 +1,10 @@
 ---
-description: "Hand off a coding plan to Codex CLI for execution. Claude Code supervises, reviews diffs, and loops until complete."
+description: "Compatibility shim that invokes the codex-handoff skill for supervised Codex CLI execution."
 argument-hint: "[task description] [--max-iterations N] [--model MODEL] [--phase N]"
 ---
 
 # Codex Handoff
 
-Use the `codex-handoff` skill to orchestrate Codex CLI execution of the current plan. Claude Code acts as the supervisor and judge — Codex CLI does the coding.
+Invoke the `codex-handoff` skill. This command preserves the `/codex-handoff` entry point for Claude Code; the skill owns the workflow.
 
 Task: $ARGUMENTS

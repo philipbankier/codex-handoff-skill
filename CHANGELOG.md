@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-06-20
+
+### Added
+- Experimental Codex-native plugin packaging for direct plan execution
+- First-class escalation policy for strategic blockers and overturned assumptions
+- Release verification script for skill size, version consistency, stale patterns, manifests, and fixtures
+- Skill eval fixture covering trigger, safety, phased-plan, verification, and model-preflight cases
+- Release verification evidence document for exact commands, exits, skipped checks, and limitations
+
+### Changed
+- Refreshed Claude Code supervisor workflow around readiness gates, evidence review, and scoped correction loops
+- Updated Codex CLI command examples to use pinned directories and workspace-write sandboxing
+- Made superpowers planning helpers optional examples instead of required dependencies
+- Split stable Claude-supervisor docs from experimental Codex-direct docs
+
+### Removed
+- Stale automatic-execution flag, sentinel completion, and npm-only install guidance from primary docs
+
 ## [1.1.1] - 2026-03-13
 
 ### Added

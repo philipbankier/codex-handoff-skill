@@ -12,7 +12,9 @@ echo "Codex CLI:"
 if command -v codex &>/dev/null; then
   echo "  [OK] codex found: $(codex --version 2>/dev/null || echo 'version unknown')"
 else
-  echo "  [!!] codex not found — install with: npm install -g @openai/codex"
+  echo "  [!!] codex not found"
+  echo "       Install Codex CLI from: https://developers.openai.com/codex/cli"
+  echo "       Then verify with: codex --version"
   errors=$((errors + 1))
 fi
 echo ""
@@ -29,7 +31,7 @@ if [ -d "$HOME/.claude" ]; then
       errors=$((errors + 1))
     fi
   elif [ -d "$HOME/.claude/skills/codex-handoff" ]; then
-    echo "  [OK] skill directory exists (not a symlink — manual install)"
+    echo "  [OK] skill directory exists (not a symlink - manual install)"
   else
     echo "  [--] skill not installed"
     errors=$((errors + 1))
@@ -44,7 +46,7 @@ if [ -d "$HOME/.claude" ]; then
       errors=$((errors + 1))
     fi
   elif [ -f "$HOME/.claude/commands/codex-handoff.md" ]; then
-    echo "  [OK] command file exists (not a symlink — manual install)"
+    echo "  [OK] command file exists (not a symlink - manual install)"
   else
     echo "  [--] command not installed"
     errors=$((errors + 1))
@@ -70,6 +72,7 @@ for dir in "$HOME/.openclaw" "$HOME/.clawdbot"; do
       fi
     else
       echo "  [--] skill not installed in $dir"
+      errors=$((errors + 1))
     fi
   fi
 done
@@ -84,4 +87,5 @@ if [ "$errors" -eq 0 ]; then
   echo "All checks passed."
 else
   echo "$errors issue(s) found."
+  exit 1
 fi

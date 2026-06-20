@@ -1,0 +1,13 @@
+{
+  "name": "codex-handoff-local",
+  "plugins": [
+    {
+      "name": "codex-handoff-codex",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-handoff-codex"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

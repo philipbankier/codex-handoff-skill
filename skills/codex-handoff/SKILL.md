@@ -1,11 +1,10 @@
 ---
 name: Codex Handoff
-version: 1.1.1
+version: 1.2.0
 description: |
-  Offload finalized coding plans to Codex CLI for automated execution.
-  Use when: user says "hand off to codex", "let codex do it", "offload to codex",
-  runs /codex-handoff, or has a plan ready for Codex CLI execution.
-  Claude Code acts as supervisor/judge in a loop — Codex CLI does the coding.
+  Use when the user wants Claude Code to supervise Codex CLI execution of an existing coding plan,
+  including readiness gating, phased execution, verification evidence, and correction loops.
+  Claude Code acts as supervisor/judge. Codex CLI does the execution.
 allowed-tools:
   - Bash
   - Read
@@ -13,98 +12,124 @@ allowed-tools:
   - Grep
 ---
 
-# Codex Handoff — Supervisor Loop
+# Codex Handoff - Supervisor Loop
 
-Claude Code is the **supervisor/judge**. Codex CLI is the **executor**. You orchestrate a loop: send plan to Codex, review results, re-run if incomplete, until the task is comprehensively done.
+Claude Code supervises and judges. Codex CLI executes token-heavy code and check work. Pass/fail belongs to the supervisor.
 
-**Announce at start:** "Using codex-handoff to orchestrate Codex CLI execution of the plan."
+Announce at start: "Using codex-handoff to orchestrate Codex CLI execution of the plan."
 
 ## Prerequisites
 
-- Codex CLI must be installed (`codex --version`)
-- A plan must exist (in `docs/plans/`, `.claude/plans/`, or provided inline)
-- The working directory should be a git repo (for diff-based review)
+- Codex CLI installed and verified with `codex --version`.
+- A plan exists in `docs/plans/`, `.claude/plans/`, or inline.
+- A git repo is preferred for diff-based review.
+- Use Bash only for orchestration: git state, prompt files, Codex CLI, and checks. Do not hand-code the task.
 
 ## Quick Start
 
-1. **Locate** the plan (from `docs/plans/`, `.claude/plans/`, or user arguments)
-2. **Detect phases** — scan for phase headings; if found, execute phase-by-phase
-3. **Build** a structured Codex prompt with plan (or phase) + project context + coding standards
-4. **Execute** Codex CLI in `--full-auto` mode
-5. **Review** git diff, run tests, audit completion with a scorecard
-6. **Decide** — loop with correction prompt if items remain, or advance to next phase / finalize
-7. **Report** final status with completed/remaining items and test results
+1. Locate the plan.
+2. Gate readiness: `ready`, `needs clarification`, `needs split`, or `unsafe to run`.
+3. Detect phases if present.
+4. Capture branch, `git status --short`, dirty files, plan path, and phase.
+5. Build a contract-shaped prompt.
+6. Run Codex with pinned directory and workspace sandbox.
+7. Review exact command evidence and unplanned diffs.
+8. Decide whether to loop, split, stop, or report completion.
 
 ## Reference
 
 | Task | Details |
 |------|---------|
 | Build Codex prompt | [prompt-templates.md](references/prompt-templates.md) |
-| Review & audit results | [review-process.md](references/review-process.md) |
+| Review and audit results | [review-process.md](references/review-process.md) |
+| Escalate blockers | [escalation-policy.md](references/escalation-policy.md) |
 | Handle errors | [error-handling.md](references/error-handling.md) |
 
 ## Process
 
-### Step 1: LOCATE THE PLAN
+## Step 1: Locate And Gate The Plan
 
-Find the plan to execute. Search in order:
+Search in order:
 
-1. If user provided a task description with the command, use that as context to find the relevant plan
-2. Check `docs/plans/` for the most recent `.md` file (sorted by date prefix)
-3. Check `.claude/plans/` for any recent plan files
-4. If no plan found, tell the user: "No plan found. Please create one first using /brainstorming or /writing-plans."
+1. User arguments matched against plan filenames and content
+2. `docs/plans/`, most recent `.md` file by date prefix
+3. `.claude/plans/`, recent plan files
 
-Once found:
-- Read the plan file completely
-- Present a brief summary to the user
-- Ask: "Ready to hand off to Codex CLI?"
-- Wait for confirmation before proceeding
+If no plan is found, tell the user to create or provide one. `/brainstorming` and `/writing-plans` are optional examples if installed, not required dependencies.
 
-### Step 1b: DETECT PHASES
+Read the plan completely, summarize it, then classify readiness:
 
-After reading the plan, scan for H2 headings matching: `## Phase N:`, `## Stage N:`, `## Part N:`, or numbered sections like `## 1. Backend`.
+| Gate | Use When |
+|------|----------|
+| `ready` | Goal, scope, checks, and stop conditions are clear |
+| `needs clarification` | Required inputs or choices are missing |
+| `needs split` | Plan is too broad for one Codex run |
+| `unsafe to run` | Plan risks destructive work, secrets, or broad permissions |
 
-- **Phases found** — Report: "Detected {N} phases. Will execute sequentially." Use phased flow.
-- **No phases** — Single-pass execution (Steps 2-6 as normal). No changes for simple plans.
-- **`--phase N`** — Optional. Re-run only phase N.
+Ask the user before running unless they already gave explicit approval for this exact plan and scope.
 
-### Step 2: BUILD THE CODEX PROMPT
+## Step 2: Detect Phases
 
-See [prompt-templates.md](references/prompt-templates.md). Use the "Initial Execution Prompt" for single-pass, or "Phase-Scoped Execution Prompt" for phased mode (current phase only + completed phase summaries).
+Scan for H2 headings matching `## Phase N:`, `## Stage N:`, `## Part N:`, or numbered H2 sections like `## 1. Backend`.
 
-### Step 3: EXECUTE CODEX
+- Phases found: report the count and execute sequentially.
+- No phases: run single-pass.
+- `--phase N`: run only that phase.
 
-Parse optional arguments:
-- `--max-iterations N` — max loop iterations (default: 5, per-phase in phased mode)
-- `--model MODEL` — pass to codex as `-m MODEL`
-- `--phase N` — execute only this phase (phased mode only)
+## Step 3: Build The Codex Prompt
+
+See [prompt-templates.md](references/prompt-templates.md). Each prompt must include:
+
+- Goal
+- Context, including target directory and pre-run baseline
+- Constraints
+- Allowed scope
+- Done when
+- Verification commands
+- Stop conditions
+
+Codex auto-discovers project `AGENTS.md`. Do not paste full local instruction files by default.
+
+## Step 4: Execute Codex
+
+Arguments:
+
+- `--max-iterations N`: default 5, per phase in phased mode
+- `--model MODEL`: optional; pass only after verifying the local Codex install/account supports it
+- `--phase N`: execute only phase N
 
 ```bash
-codex exec --full-auto -s workspace-write [-m MODEL] < /tmp/codex-handoff-{timestamp}.md
+prompt_file="$(mktemp -t codex-handoff.XXXXXX.md)"
+# Write the rendered contract to "$prompt_file", then run:
+codex exec -C "{target_dir}" --sandbox workspace-write [-m MODEL] < "$prompt_file"
 ```
 
-Let the command run to completion. Capture stdout and exit code. Report: "Codex iteration {N} complete. Reviewing changes..."
+Capture stdout, stderr, and exit code. Review before deciding.
 
-**Phased execution flow:** For each phase (or single phase if `--phase N`): build phase-scoped prompt → run Codex → review → correction loop (up to max-iterations) → phase passes: record summary, advance → phase fails at max: ask user to continue or stop.
+## Step 5: Review The Results
 
-### Step 4: REVIEW THE RESULTS
+See [review-process.md](references/review-process.md). Review is supervisor-owned:
 
-See [review-process.md](references/review-process.md) for the review checklist, scorecard, and decision matrix. In phased mode, the scorecard is scoped to current phase items only.
+- compare against the pre-run baseline
+- inspect `git diff --stat` and `git diff`
+- run listed verification commands
+- record exact commands, exit codes, and skipped checks with reasons
+- audit unplanned file changes
+- score each plan item
 
-### Step 5: DECIDE — LOOP OR COMPLETE
+Executor notes are useful context only. They are not pass conditions.
 
-- **All items DONE + tests pass:** Move to Step 6 (or next phase).
-- **Items remain AND iterations < max:** Build correction prompt and re-run Codex.
-- **Max iterations reached:** Move to Step 6. In phased mode, ask user to continue or stop.
+## Step 6: Decide
 
-### Step 6: FINAL REPORT
-
-See report format in [review-process.md](references/review-process.md). In phased mode, report per-phase results then aggregate. If items remain, suggest `--phase N` to retry.
+- All scoped items done and evidence passes: advance or report done.
+- Items remain and iterations remain: build a correction prompt and re-run.
+- Missing inputs, unsafe scope, or repeated failure: stop and ask the user.
+- No meaningful checks available: report unverified status, but do not claim verified completion.
 
 ## Key Principles
 
-1. **Never modify code yourself** — Your job is to supervise, not code. Codex does the coding.
-2. **Be a strict judge** — Don't pass items as "done" unless they genuinely are.
-3. **Correction prompts are specific** — Tell Codex exactly what's wrong and what to fix.
-4. **Respect the plan** — Don't add or remove plan items. Execute what was planned.
-5. **Keep the user informed** — Report status after each iteration and phase transition.
+1. Supervise, do not code the task yourself.
+2. Be a strict judge. Pass only what the diff and command evidence support.
+3. Keep correction prompts specific and scoped.
+4. Respect the plan. Do not add speculative work.
+5. Keep the user informed after each iteration and phase transition.

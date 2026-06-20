@@ -1,191 +1,230 @@
 # codex-handoff
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](CHANGELOG.md)
 [![Claude Code](https://img.shields.io/badge/platform-Claude%20Code-blueviolet.svg)](https://docs.anthropic.com/en/docs/claude-code)
 [![OpenClaw](https://img.shields.io/badge/platform-OpenClaw-orange.svg)](https://github.com/openclaw)
 
-Hand off ready-to-go coding plans to [Codex CLI](https://github.com/openai/codex) for execution. Your agent supervises, reviews, and loops until done.
+Hand off ready coding plans to [Codex CLI](https://github.com/openai/codex) for execution. Claude Code supervises, reviews evidence, and decides whether the work is done.
 
-Works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [OpenClaw](https://github.com/openclaw).
+The product idea is simple: Claude Code manages and judges. Codex CLI performs token-heavy execution and mechanical repo work.
+
+Works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code). OpenClaw skill files and manifest are included, but verify your local OpenClaw install before relying on it.
 
 ## Quick Start
 
-**1. Install [superpowers](https://github.com/obra/superpowers)** for brainstorming and planning skills:
-
-Give your agent the URL and ask it to install:
-> "Install https://github.com/obra/superpowers so I can use brainstorming and planning skills"
-
-**2. Install codex-handoff:**
-
-Same approach — give your agent the URL:
-> "Install https://github.com/philipbankier/codex-handoff so I can hand off plans to Codex"
-
-**3. Brainstorm, plan, hand off:**
-> "Let's brainstorm a markdown link checker CLI" → uses `/brainstorming`
->
-> "Write the plan" → uses `/writing-plans`
->
-> "Hand it off to codex" → codex-handoff takes over
-
-That's it. Your agent sends the plan to Codex CLI, reviews the results, and loops if anything is incomplete. You review the final output and commit.
-
-## Install
-
-### The easy way (recommended)
-
-Give the repo URL to your Claude Code or OpenClaw agent and ask it to install:
-
-> "Install and set up https://github.com/philipbankier/codex-handoff"
-
-The agent will clone the repo, run the installer, and configure everything. Done.
-
-### Manual install
+1. Install codex-handoff:
 
 ```bash
-git clone https://github.com/philipbankier/codex-handoff.git
+git clone https://github.com/philipbankier/codex-handoff-skill.git
 cd codex-handoff
 bash install.sh
 ```
 
-This creates symlinks into your agent's config directory. Updates are applied instantly with `git pull`.
+2. Make sure Codex CLI is installed and on PATH:
 
-Platform-specific:
 ```bash
-bash install.sh --platform=claude-code    # Claude Code only
-bash install.sh --platform=openclaw       # OpenClaw only
+codex --version
 ```
 
-### Prerequisites
+If `codex` is missing, use the [official Codex CLI install docs](https://developers.openai.com/codex/cli).
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) or [OpenClaw](https://github.com/openclaw) installed
-- [Codex CLI](https://github.com/openai/codex) installed: `npm install -g @openai/codex`
+3. Create or choose a plan, then hand it off:
 
-### Verify / Uninstall
+> "Hand this plan off to Codex"
+
+Optional: if you already use [superpowers](https://github.com/obra/superpowers), `/brainstorming` and `/writing-plans` are useful ways to create plans first. They are examples, not dependencies.
+
+Claude Code checks that the plan is ready, captures the pre-run baseline, sends a contract-shaped prompt to Codex CLI, reviews the diff and command evidence, and loops only when the supervisor finds specific gaps.
+
+## Install
+
+The easy path is to give this repo URL to Claude Code or OpenClaw and ask it to install:
+
+> "Install and set up https://github.com/philipbankier/codex-handoff-skill"
+
+Manual install:
 
 ```bash
-bash scripts/verify-install.sh            # check installation
-bash uninstall.sh                         # remove
+git clone https://github.com/philipbankier/codex-handoff-skill.git
+cd codex-handoff
+bash install.sh
+```
+
+Platform-specific install:
+
+```bash
+bash install.sh --platform=claude-code
+bash install.sh --platform=openclaw
+```
+
+This repo uses symlinks into the agent config directory. Updates apply with `git pull`.
+
+Prerequisites:
+
+| Tool        | Requirement                                                   |
+|-------------|---------------------------------------------------------------|
+| Claude Code | Required for the slash command workflow                       |
+| OpenClaw    | Optional skill install path, verify locally                   |
+| Codex CLI   | Required executor, verify with `codex --version`              |
+
+Use the [official Codex CLI install docs](https://developers.openai.com/codex/cli) for current install and upgrade methods.
+
+## Experimental Codex Plugin Install
+
+`1.2.0` includes an experimental Codex-native plugin for direct execution.
+
+Use this path when you want Codex itself to locate or accept a plan, execute scoped changes in its sandbox, run checks, review evidence, and escalate strategic blockers.
+
+```bash
+codex plugin marketplace add ./
+```
+
+Check your installed Codex CLI help before relying on plugin commands:
+
+```bash
+codex plugin --help
+codex plugin marketplace --help
+```
+
+Direct Codex mode is autonomous for routine scoped work. It must stop with `ESCALATION_REQUIRED` when assumptions are overturned, scope expands, credentials are missing, verification cannot prove completion, or strategic choices appear.
+
+If your Codex CLI uses a different plugin command shape, follow `codex plugin marketplace --help` and keep the same local repository root as the marketplace source.
+
+## Verify / Uninstall
+
+```bash
+bash scripts/verify-install.sh
+bash uninstall.sh
 ```
 
 ## Recommended Workflow
 
-The simplest way to use codex-handoff:
+1. Start from a real plan. It can be in `docs/plans/`, `.claude/plans/`, or provided inline.
+2. Ask Claude Code to hand it off to Codex.
+3. Claude Code applies the readiness gate:
 
-**1. Brainstorm your idea** using [superpowers](https://github.com/obra/superpowers) `/brainstorming`:
+| Gate                | Meaning                                                     |
+|---------------------|-------------------------------------------------------------|
+| ready               | Goal, scope, constraints, checks, and stop conditions exist |
+| needs clarification | The plan has unresolved choices or missing inputs           |
+| needs split         | The plan is too broad for one executor run                  |
+| unsafe to run       | The plan risks destructive, secret, or broad-permission work |
 
-> "I want to build a CLI tool that checks markdown files for broken links"
+4. Claude Code captures the pre-run baseline:
 
-The brainstorming skill helps you explore the idea, identify requirements, and think through edge cases before writing any code.
-
-**2. Write the plan** using `/writing-plans`:
-
-> "Let's write the plan for this"
-
-This produces a structured, numbered plan with clear items — exactly what Codex needs to execute.
-
-**3. Hand it off** when the plan is ready:
-
-> "Hand it off to codex"
-
-Your agent locates the plan, sends it to Codex CLI, and supervises the execution. Codex writes the code, runs tests, and your agent reviews the results. If anything is incomplete, it automatically builds a correction prompt and loops — up to 5 iterations by default.
-
-**4. Review and commit** the final output.
-
-### Other ways to trigger
-
+```bash
+git branch --show-current
+git status --short
 ```
-/codex-handoff                          # uses the most recent plan
-/codex-handoff add auth to the API      # finds a relevant plan
-/codex-handoff --max-iterations 3       # limit retry loops
-/codex-handoff --model o4-mini          # specify Codex model
-/codex-handoff --phase 2                # re-run only phase 2
+
+It records dirty files, the plan path, and the phase being executed.
+
+5. Codex CLI runs with a pinned working directory and workspace-write sandbox. The supervisor should write the prompt to a `mktemp` file and clean it up after the run:
+
+```bash
+prompt_file="$(mktemp -t codex-handoff.XXXXXX.md)"
+# Write the rendered contract to "$prompt_file", then run:
+codex exec -C "{target_dir}" --sandbox workspace-write < "$prompt_file"
+```
+
+Model overrides are account and catalog dependent. Only pass `-m MODEL` after verifying that the installed local Codex CLI and account support that model. Otherwise, omit it and use the Codex default.
+
+6. Claude Code reviews the result using evidence:
+
+- exact verification commands
+- exit codes
+- skipped checks with reasons
+- unplanned diff audit
+- plan item scorecard
+
+No executor note is a pass condition. Claude Code owns the final decision.
+
+## Other Ways To Trigger
+
+```text
+/codex-handoff
+/codex-handoff add auth to the API
+/codex-handoff --max-iterations 3
+/codex-handoff --model MODEL
+/codex-handoff --phase 2
 ```
 
 ## Compatibility
 
-| Platform | Status | Skill | Slash Command | Install Path |
-|----------|--------|-------|---------------|--------------|
-| Claude Code | Full support | Yes | `/codex-handoff` | `~/.claude/` |
-| OpenClaw | Skill only | Yes | Via description match | `~/.openclaw/` |
-| Codex CLI | Required dependency | -- | -- | System-wide (`npm -g`) |
+| Platform     | Status                                  | Skill | Slash Command     | Install Path               |
+|--------------|-----------------------------------------|-------|-------------------|----------------------------|
+| Claude Code  | Stable supervisor workflow              | Yes   | `/codex-handoff`  | `~/.claude/`               |
+| OpenClaw     | Existing skill files and manifest       | Yes   | Description match | `~/.openclaw/`             |
+| Codex plugin | Experimental direct execution workflow  | Yes   | N/A               | local plugin marketplace   |
+| Codex CLI    | Required executor for stable path       | N/A   | N/A               | User PATH                  |
 
 ## Configuration
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--max-iterations N` | `5` | Maximum supervisor loop iterations (per phase in phased mode) |
-| `--model MODEL` | Codex default | Model for Codex CLI to use (e.g., `o4-mini`) |
-| `--phase N` | All phases | Execute only phase N (for re-running a specific phase) |
+| Option               | Default       | Description                                                   |
+|----------------------|---------------|---------------------------------------------------------------|
+| `--max-iterations N` | `5`           | Maximum supervisor loop iterations per phase                  |
+| `--model MODEL`      | Codex default | Optional model override after local account/catalog check     |
+| `--phase N`          | All phases    | Execute only phase N when a plan has phases                   |
 
 ## Examples
 
-- **[Simple walkthrough](examples/simple/)** — A real captured transcript showing codex-handoff executing a 5-item plan in a single pass. Plan, Codex output, scorecard, and generated code included.
+- [Simple walkthrough](examples/simple/) shows a captured single-pass handoff with plan, output, scorecard, and generated code.
+- [Advanced multi-phase plan](examples/advanced-momentum-trader/) shows a larger phased workflow.
 
-- **[Advanced: multi-phase plan](examples/advanced-momentum-trader/)** — A complex trading system with 7 separate plans demonstrating phased execution.
+## How It Works Under The Hood
 
-## How It Works Under the Hood
-
-```
-                   ┌─────────────────────────────────┐
-                   │        Your AI Agent              │
-                   │     (Supervisor / Judge)           │
-                   └──────────┬──────────┬─────────────┘
-                              │          ▲
-                  1. Send     │          │  4. Review
-                     plan     │          │     diff
-                              ▼          │
-                   ┌─────────────────────────────────┐
-                   │          Codex CLI                │
-                   │         (Executor)                │
-                   └──────────┬──────────┬─────────────┘
-                              │          ▲
-                  2. Write    │          │  3. Run
-                     code     │          │     tests
-                              ▼          │
-                   ┌─────────────────────────────────┐
-                   │        Your Codebase              │
-                   └───────────────────────────────────┘
+```text
+Your AI Agent (Supervisor / Judge)
+  -> sends contract prompt
+Codex CLI (Executor)
+  -> edits code and runs checks in the target repo
+Your AI Agent
+  -> reviews diff, commands, exit codes, and plan completion
 ```
 
-### The Supervisor Loop
+Supervisor loop:
 
-1. **Locate** — Agent finds your plan (from `docs/plans/`, `.claude/plans/`, or inline)
-2. **Detect phases** — Scans for phase headings (`## Phase 1:`, `## Stage 1:`, `## Part 1:`, `## 1. ...`). If found, executes phase-by-phase. If not, runs as a single pass.
-3. **Build prompt** — Constructs a structured prompt with plan + project context (package manager, test commands, coding standards from `CLAUDE.md`)
-4. **Execute** — Runs `codex exec --full-auto -s workspace-write`
-5. **Review** — Agent reviews the git diff, runs tests, audits plan completion with a scorecard (DONE / PARTIAL / MISSING)
-6. **Decide** — If items remain and iterations are under the limit, builds a correction prompt and re-runs. In phased mode, advances to next phase when current phase passes.
-7. **Report** — Presents final status with completed/remaining items and test results
+1. Locate the plan from arguments, `docs/plans/`, `.claude/plans/`, or inline text.
+2. Detect phases and decide single-pass or phase-scoped execution.
+3. Apply the readiness gate and ask before running when the plan is not ready.
+4. Capture branch, `git status --short`, dirty files, plan path, and phase.
+5. Build a contract-shaped Codex prompt with Goal, Context, Constraints, Allowed scope, Done when, Verification commands, and Stop conditions.
+6. Rely on Codex AGENTS.md auto-discovery. Summarize relevant local instructions only when needed. Do not paste full local instruction files by default.
+7. Execute Codex with `-C "{target_dir}" --sandbox workspace-write`.
+8. Review the git diff, verification commands, exit codes, skipped checks, and unplanned changes.
+9. Decide whether to loop, split, stop, or report completion.
 
-### Phased Execution
+## Phased Execution
 
-For large plans with distinct phases, codex-handoff automatically detects phase headings and executes one phase at a time:
+For large plans with clear phase headings, codex-handoff executes one phase at a time:
 
-- Each phase gets a focused prompt (no wasted context on future phases)
-- Dependencies between phases are respected
-- Per-phase scorecards give clearer progress tracking
-- Failed phases can be re-run individually with `--phase N`
+- each phase gets a focused prompt
+- completed phase summaries are carried forward
+- scorecards are scoped to the current phase
+- failed phases can be retried with `--phase N`
 
 Plans without phase headings run in single-pass mode.
 
-### Plan Discovery
+## Plan Discovery
 
 Plans are searched in order:
-1. **Argument text** — matches against plan filenames and content
-2. **`docs/plans/*.md`** — most recent file by date prefix
-3. **`.claude/plans/*.md`** — any recent plan files
+
+1. Argument text matched against plan filenames and content
+2. `docs/plans/*.md`, most recent file by date prefix
+3. `.claude/plans/*.md`, any recent plan files
 
 ## Troubleshooting
 
-### "command not found: codex"
+Command not found: `codex`
 
 ```bash
-npm install -g @openai/codex
 codex --version
 ```
 
-### Skill not showing up
+If that fails, install Codex CLI from the [official docs](https://developers.openai.com/codex/cli).
+
+Skill not showing up:
 
 ```bash
 bash scripts/verify-install.sh
@@ -193,44 +232,36 @@ bash scripts/verify-install.sh
 
 If symlinks are broken, re-run `bash install.sh`.
 
-### "No plan found"
+No plan found:
 
 Create a plan first. Plans are searched in `docs/plans/`, `.claude/plans/`, or can be provided inline. See [`resources/example-plan.md`](resources/example-plan.md) for the expected format.
 
-### Codex produces incomplete results
+Codex produces incomplete results:
 
-This is expected — the supervisor loop handles it automatically. The agent reviews each iteration, builds correction prompts, and re-runs Codex up to `--max-iterations` times.
+The supervisor loop is designed for this. Claude Code reviews each iteration, builds a correction prompt with exact remaining work, and re-runs Codex while the max-iteration limit allows it.
 
 ## Repo Structure
 
-```
+```text
 codex-handoff/
-├── commands/codex-handoff.md              # Slash command definition
-├── skills/codex-handoff/
-│   ├── SKILL.md                           # Main skill instructions
-│   └── references/
-│       ├── prompt-templates.md            # Codex prompt construction
-│       ├── review-process.md              # Review & scorecard logic
-│       └── error-handling.md              # Error handling & troubleshooting
-├── examples/
-│   ├── simple/                            # Quick walkthrough (annotated transcript)
-│   │   ├── README.md
-│   │   ├── plan.md
-│   │   └── output/                       # Actual code Codex produced
-│   └── advanced-momentum-trader/          # Complex real-world example
-│       ├── README.md
-│       ├── design-spec.md
-│       └── plan-phase1-foundation.md
-├── resources/example-plan.md              # Example plan format
-├── scripts/verify-install.sh              # Installation diagnostic
-├── install.sh                             # Multi-platform installer
-├── uninstall.sh                           # Multi-platform uninstaller
-├── openclaw.yaml                          # OpenClaw manifest
-├── CLAUDE.md                              # Repo conventions
-├── CONTRIBUTING.md                        # Contribution guidelines
-├── CODE_OF_CONDUCT.md                     # Contributor Covenant v2.1
-├── CHANGELOG.md                           # Version history
-└── LICENSE                                # MIT
+|- commands/codex-handoff.md
+|- skills/codex-handoff/
+|  |- SKILL.md
+|  `- references/
+|     |- prompt-templates.md
+|     |- review-process.md
+|     |- escalation-policy.md
+|     `- error-handling.md
+|- examples/
+|- resources/example-plan.md
+|- scripts/verify-install.sh
+|- install.sh
+|- uninstall.sh
+|- openclaw.yaml
+|- CONTRIBUTING.md
+|- CODE_OF_CONDUCT.md
+|- CHANGELOG.md
+`- LICENSE
 ```
 
 ## Contributing

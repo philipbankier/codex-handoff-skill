@@ -1,4 +1,4 @@
-# Momentum Trader — Design Specification
+# Momentum Trader - Design Specification
 
 **Date:** 2026-03-12
 **Status:** Approved
@@ -10,7 +10,7 @@ An event-driven momentum trading system that combines market data, social media 
 ### Key Decisions
 
 - **Asset classes:** US equities + crypto
-- **Timeframe:** Hybrid — intraday event reaction + daily/weekly momentum
+- **Timeframe:** Hybrid - intraday event reaction + daily/weekly momentum
 - **Execution:** Alpaca paper trading (live is a config switch)
 - **NLP primary:** GPT-5.2 via Codex CLI (`codex exec --output-schema`)
 - **NLP fallback:** Local Ollama multimodal model (pre-installed)
@@ -28,8 +28,8 @@ An event-driven momentum trading system that combines market data, social media 
 Event-driven microservices connected via Redis Streams. Each service runs independently at its own cadence.
 
 ```
-DATA LAYER → NLP ENGINE → SIGNAL LAYER → PORTFOLIO/EXECUTION → MONITORING
-     ↓            ↓             ↓                ↓                  ↓
+DATA LAYER -> NLP ENGINE -> SIGNAL LAYER -> PORTFOLIO/EXECUTION -> MONITORING
+     v            v             v                v                  v
   raw.*      events.*       signals.*        orders.*          dashboard
              sentiment.*                     fills.*
                                              regime.*
@@ -37,13 +37,13 @@ DATA LAYER → NLP ENGINE → SIGNAL LAYER → PORTFOLIO/EXECUTION → MONITORIN
 
 ### Layers
 
-1. **Data Collectors** — 8 independent workers ingesting from Apify, Finnhub, MarketAux, RSS, Google Trends, Alpaca, FRED, and Fear/Greed APIs
-2. **NLP Engine** — Preprocessor with urgency triage, Codex CLI (primary), Ollama multimodal (fallback)
-3. **Signal Generator** — Fast Signal Engine (event-driven) + Momentum Signal Engine (daily/weekly) + Regime Detector
-4. **Portfolio Manager** — 5-layer position sizing, ATR trailing stops, correlation-aware limits, drawdown circuit breaker
-5. **Executor** — Alpaca order routing (equities + crypto), fill tracking, reconciliation
-6. **Dashboard** — Next.js TypeScript app with positions, P&L, signals, sentiment, event log, backtest replay
-7. **Storage** — Redis (hot, 24h) → DuckDB (cold, indefinite) via drain worker
+1. **Data Collectors** - 8 independent workers ingesting from Apify, Finnhub, MarketAux, RSS, Google Trends, Alpaca, FRED, and Fear/Greed APIs
+2. **NLP Engine** - Preprocessor with urgency triage, Codex CLI (primary), Ollama multimodal (fallback)
+3. **Signal Generator** - Fast Signal Engine (event-driven) + Momentum Signal Engine (daily/weekly) + Regime Detector
+4. **Portfolio Manager** - 5-layer position sizing, ATR trailing stops, correlation-aware limits, drawdown circuit breaker
+5. **Executor** - Alpaca order routing (equities + crypto), fill tracking, reconciliation
+6. **Dashboard** - Next.js TypeScript app with positions, P&L, signals, sentiment, event log, backtest replay
+7. **Storage** - Redis (hot, 24h) -> DuckDB (cold, indefinite) via drain worker
 
 ---
 
@@ -96,7 +96,7 @@ DATA LAYER → NLP ENGINE → SIGNAL LAYER → PORTFOLIO/EXECUTION → MONITORIN
 - **Stream:** `raw.prices`
 - **Data:** Real-time quotes, daily bars, account positions, P&L
 - **VIX:** Fetch CBOE VIX via `yfinance` (`^VIX`) every 60 seconds during market hours, every 15 minutes outside hours. Publish to `raw.prices` with ticker `$VIX`. This is the regime detector's top-weighted input (25%).
-- **Note:** Alpaca 24/5 extended hours (Sun 8PM–Fri 8PM ET) enables overnight equity trading
+- **Note:** Alpaca 24/5 extended hours (Sun 8PM-Fri 8PM ET) enables overnight equity trading
 
 ### 2g. FRED Macro Indicators
 
@@ -122,8 +122,8 @@ DATA LAYER → NLP ENGINE → SIGNAL LAYER → PORTFOLIO/EXECUTION → MONITORIN
 2. **Deduplicates** via content hash
 3. **Normalizes** into common schema
 4. **Triages** via keyword scan: urgent items (urgent keyword + geopolitical entity co-occurrence) bypass batching, routine items are queued
-5. **Urgent items** → immediate single-item Codex CLI call
-6. **Routine items** → batched (50-100 items) every 30-60 seconds
+5. **Urgent items** -> immediate single-item Codex CLI call
+6. **Routine items** -> batched (50-100 items) every 30-60 seconds
 
 ### 3b. Urgency Keywords
 
@@ -143,7 +143,7 @@ Urgent = any urgent keyword + any geopolitical entity in the same item.
 **Primary invocation (with `--output-schema`):**
 
 ```bash
-codex exec --full-auto -s read-only \
+codex exec -C /path/to/momentum-trader -s read-only \
   --output-schema config/schemas/event_output.json \
   -o /tmp/codex-result-{timestamp}.json \
   < /tmp/codex-batch-{timestamp}.md
@@ -152,7 +152,7 @@ codex exec --full-auto -s read-only \
 **Fallback invocation (if `--output-schema` is unsupported in installed version):**
 
 ```bash
-codex exec --full-auto -s read-only \
+codex exec -C /path/to/momentum-trader -s read-only \
   --output-last-message \
   < /tmp/codex-batch-{timestamp}.md | python -m src.nlp.schema_validator
 ```
@@ -185,8 +185,8 @@ codex exec --full-auto -s read-only \
 - `sentiment.scored`: item_id, timestamp, source, asset/ticker, sentiment (-1 to 1), direction, confidence, engagement_weight
 
 **Engagement weight** (source-type dependent):
-- **Social media (Twitter/Reddit):** `log(1 + likes + 2*retweets + 0.5*replies)` — prevents single viral posts from overwhelming signal while still respecting social proof.
-- **News articles (Finnhub, MarketAux, RSS):** Fixed credibility score by source tier. Tier 1 (Reuters, Bloomberg, WSJ) = 2.0, Tier 2 (CNBC, MarketWatch, FT) = 1.5, Tier 3 (all other sources) = 1.0. Government sources (White House, Fed, USTR) = 3.0 (highest weight — these are primary sources, not analysis).
+- **Social media (Twitter/Reddit):** `log(1 + likes + 2*retweets + 0.5*replies)` - prevents single viral posts from overwhelming signal while still respecting social proof.
+- **News articles (Finnhub, MarketAux, RSS):** Fixed credibility score by source tier. Tier 1 (Reuters, Bloomberg, WSJ) = 2.0, Tier 2 (CNBC, MarketWatch, FT) = 1.5, Tier 3 (all other sources) = 1.0. Government sources (White House, Fed, USTR) = 3.0 (highest weight - these are primary sources, not analysis).
 - All engagement weights are normalized to a 0-1 scale before the engagement-weighted mean, ensuring news and social items contribute proportionally.
 
 ---
@@ -197,7 +197,7 @@ codex exec --full-auto -s read-only \
 
 - **Consumes:** `events.geopolitical`, `sentiment.scored`
 - **Publishes to:** `signals.fast`
-- **Always listening** — reacts within minutes
+- **Always listening** - reacts within minutes
 
 **Trigger conditions (ALL required):**
 1. `event.severity >= 7`
@@ -210,10 +210,10 @@ codex exec --full-auto -s read-only \
 |---|---|---|
 | tariff | Short affected sectors, long safe havens (GLD, BTC) | Long affected beneficiaries |
 | sanctions | Short affected country ETFs, long competitors | Long replacement suppliers |
-| military | Long defense (ITA), oil; short broad market | — |
+| military | Long defense (ITA), oil; short broad market | - |
 | monetary_policy | Short growth, long TLT | Long growth/tech, long BTC |
-| trade_deal | — | Long affected sectors |
-| market_shock | Reduce all positions, increase cash | — |
+| trade_deal | - | Long affected sectors |
+| market_shock | Reduce all positions, increase cash | - |
 
 **Corroboration:** Rolling window anchored to the *first-seen* event of a given `event_type`. Window sizes vary by source latency:
 - News sources (Finnhub, MarketAux, RSS): 5-minute window (all poll at <= 2 min intervals)
@@ -222,8 +222,8 @@ codex exec --full-auto -s read-only \
 - Require >= 2 unique sources for full conviction. Aggregate severity = mean, sentiment = engagement-weighted mean.
 
 **Conviction formula:**
-- Multi-source (>= 2 sources): `conviction = severity/10 * confidence * min(source_count/3, 1.0)` — caps at 3 sources, scales linearly.
-- Single-source (corroboration window expired with 1 source): `conviction = severity/10 * confidence * 0.5` — the `source_count` factor is replaced by a flat 0.5 modifier, not compounded with it. This ensures high-severity single-source events (e.g., severity 9, confidence 0.9 = conviction 0.405) remain below the full-conviction threshold but above the discard threshold in Section 4d.
+- Multi-source (>= 2 sources): `conviction = severity/10 * confidence * min(source_count/3, 1.0)` - caps at 3 sources, scales linearly.
+- Single-source (corroboration window expired with 1 source): `conviction = severity/10 * confidence * 0.5` - the `source_count` factor is replaced by a flat 0.5 modifier, not compounded with it. This ensures high-severity single-source events (e.g., severity 9, confidence 0.9 = conviction 0.405) remain below the full-conviction threshold but above the discard threshold in Section 4d.
 
 **Signal output:** signal_id, timestamp, strategy: "fast", action, assets, conviction, event_context, ttl: 4h
 
@@ -249,16 +249,16 @@ Default weights: price 0.30, sentiment 0.25, volume 0.20, social 0.15, trends 0.
 
 **Component definitions:**
 - `price_momentum`: normalize(0.5 * returns_5d + 0.3 * returns_20d + 0.2 * RSI_percentile)
-- `sentiment_momentum`: normalize(rolling_3d_sentiment - rolling_14d_sentiment) — measures sentiment *acceleration*, not level
+- `sentiment_momentum`: normalize(rolling_3d_sentiment - rolling_14d_sentiment) - measures sentiment *acceleration*, not level
 - `volume_momentum`: normalize(volume_5d_avg / volume_20d_avg)
 - `social_momentum`: normalize(mention_count_24h / mention_count_7d_avg)
 - `trend_momentum`: normalize(google_trends_current / google_trends_4w_avg)
 
-**Ranking:** Score all assets → rank descending → top quintile = LONG, bottom quintile = SHORT (if enabled), middle = no action.
+**Ranking:** Score all assets -> rank descending -> top quintile = LONG, bottom quintile = SHORT (if enabled), middle = no action.
 
 **Signal output:** signal_id, timestamp, strategy: "momentum", action, asset, momentum_score, component_scores, rank, quintile, ttl: 7d
 
-**Regime-conditional TTL:** Momentum signals are invalidated immediately on any regime transition (e.g., RISK_ON → RISK_OFF). On regime change, all outstanding momentum signals are purged and a forced re-evaluation runs within 5 minutes using the new regime context. The 7-day TTL only applies if the regime remains unchanged.
+**Regime-conditional TTL:** Momentum signals are invalidated immediately on any regime transition (e.g., RISK_ON -> RISK_OFF). On regime change, all outstanding momentum signals are purged and a forced re-evaluation runs within 5 minutes using the new regime context. The 7-day TTL only applies if the regime remains unchanged.
 
 ### 4c. Regime Detector
 
@@ -284,10 +284,10 @@ regime_score = (
 
 ### 4d. Signal Conflict Resolution
 
-1. Fast conviction > 0.8 → ALWAYS takes precedence
-2. Fast conviction 0.5-0.8 → blended (agree = increase size, disagree = fast direction at 50% size)
-3. Fast conviction < 0.3 → discarded (threshold lowered from 0.5 to accommodate single-source events which max out around 0.45)
-4. `market_shock` severity >= 9 → global risk-off, reduce ALL positions by configurable % (default 50%)
+1. Fast conviction > 0.8 -> ALWAYS takes precedence
+2. Fast conviction 0.5-0.8 -> blended (agree = increase size, disagree = fast direction at 50% size)
+3. Fast conviction < 0.3 -> discarded (threshold lowered from 0.5 to accommodate single-source events which max out around 0.45)
+4. `market_shock` severity >= 9 -> global risk-off, reduce ALL positions by configurable % (default 50%)
 
 ---
 
@@ -295,24 +295,24 @@ regime_score = (
 
 ### 5a. Position Sizing (5 Layers)
 
-**Layer 1 — Half-Kelly base:**
+**Layer 1 - Half-Kelly base:**
 - `kelly_pct = W - ((1 - W) / R)`, use `kelly_pct / 2`
 - W = rolling 60-trade win rate (round-trip: entry + exit = 1 trade), R = avg_win / avg_loss
 - **Cold start:** Until 60 trades have been recorded, use fixed fractional sizing: 1% of portfolio per position. This prevents NaN/negative Kelly values on a fresh deployment. The transition from fixed to Kelly is automatic once the 60-trade threshold is reached.
 
-**Layer 2 — Volatility scaling:**
+**Layer 2 - Volatility scaling:**
 - `vol_adjusted = base * (target_vol / asset_ATR_14d)`
 - Target daily vol: 1.5% (configurable)
 
-**Layer 3 — Regime adjustment:**
+**Layer 3 - Regime adjustment:**
 - RISK_ON: 1.0x | NEUTRAL: 0.75x | RISK_OFF: 0.5x longs, 1.25x shorts
 
-**Layer 4 — Correlation clamp:**
+**Layer 4 - Correlation clamp:**
 - Rolling 30-day correlation matrix
 - Assets with correlation > 0.7 form clusters
 - Max allocation per cluster: 25% of portfolio
 
-**Layer 5 — Hard limits:**
+**Layer 5 - Hard limits:**
 - Max single position: 5%
 - Max sector exposure: 25%
 - Max total exposure: 150% gross (sum of absolute notional values of all positions / total account equity). Measured across both equities and crypto in USD terms. Crypto positions count at 1:1 weight. This limit applies at all times regardless of market hours.
@@ -364,7 +364,7 @@ Peak equity resets only after new all-time high sustained for 5 consecutive trad
 2. Position size within hard limits
 3. Buying power available
 4. Asset tradeable (not halted)
-5. Extended hours: convert market → limit (last quote + 0.1% buffer)
+5. Extended hours: convert market -> limit (last quote + 0.1% buffer)
 
 **Order types:** Entries = limit orders. Trailing stops = Alpaca native where supported, else simulated. Emergency exits = market orders.
 
@@ -423,13 +423,13 @@ Transport: HTTP POST to configurable webhook URLs.
 
 **NLP output versioning:** The `events` and `sentiment_scores` tables include `nlp_model_version` (e.g., "gpt-5.2-codex" or "llava:13b") to enable reproducible backtests. The backtest replay defaults to using stored NLP output and only optionally re-runs live NLP when explicitly requested.
 
-**Drain worker:** Continuous (every 60s), reads Redis Streams → appends to DuckDB. Monitoring: tracks drain lag (Redis stream length vs last consumed offset). Alerts if lag exceeds 10 minutes. Recovery: if drain worker was down, Redis 48h retention provides buffer to catch up.
+**Drain worker:** Continuous (every 60s), reads Redis Streams -> appends to DuckDB. Monitoring: tracks drain lag (Redis stream length vs last consumed offset). Alerts if lag exceeds 10 minutes. Recovery: if drain worker was down, Redis 48h retention provides buffer to catch up.
 
 ### 7b. Backtesting
 
-**Mode 1 — VectorBT (parameter sweep):** Test thousands of parameter combos (momentum weights, ATR multipliers, regime thresholds) in seconds via NumPy/Numba acceleration. Input from DuckDB → pandas.
+**Mode 1 - VectorBT (parameter sweep):** Test thousands of parameter combos (momentum weights, ATR multipliers, regime thresholds) in seconds via NumPy/Numba acceleration. Input from DuckDB -> pandas.
 
-**Mode 2 — Event Replay (full simulation):** Query DuckDB for date range → replay events chronologically through all engines → simulated executor (no real orders) → equity curve + trade log + benchmark comparison (SPY, BTC, 60/40).
+**Mode 2 - Event Replay (full simulation):** Query DuckDB for date range -> replay events chronologically through all engines -> simulated executor (no real orders) -> equity curve + trade log + benchmark comparison (SPY, BTC, 60/40).
 
 Key feature: can optionally re-run NLP with current model against historical news to test if improved models would have caught events the old model missed. By default, replays use the stored NLP output (with `nlp_model_version` tag) for reproducibility. Re-running live NLP must be explicitly requested and produces a separate tagged result set.
 
@@ -444,7 +444,7 @@ Key feature: can optionally re-run NLP with current model against historical new
 - **Portfolio:** Current positions, unrealized P&L, sector exposure, correlation heatmap
 - **Sentiment:** Per-asset sentiment timeline, engagement-weighted heatmap
 - **Events:** Geopolitical event log with severity, affected assets, actions taken
-- **Backtest:** Replay view — select date range, watch system decisions unfold
+- **Backtest:** Replay view - select date range, watch system decisions unfold
 - **Settings:** Config editor for tuning parameters without code changes
 
 ### API
@@ -459,27 +459,27 @@ Python backend exposes REST endpoints reading from Redis (live) and DuckDB (hist
 
 ```
 momentum-trader/
-├── config/
-│   ├── config.yaml
-│   ├── watchlist.yaml
-│   ├── schemas/
-│   │   ├── event_output.json
-│   │   └── sentiment_output.json
-│   └── .env.example
-├── src/
-│   ├── collectors/        # 8 collector services
-│   ├── nlp/               # preprocessor, codex, ollama, image analysis
-│   ├── signals/           # fast, momentum, regime, conflict resolver
-│   ├── portfolio/         # sizing, correlation, exits, circuit breaker
-│   ├── execution/         # executor, fill tracker, alerting
-│   ├── storage/           # redis helpers, duckdb store, drain worker
-│   ├── backtest/          # vectorbt sweep, event replay, benchmarks
-│   └── common/            # config loader, pydantic models, logging
-├── dashboard/             # Next.js TypeScript app
-├── data/                  # DuckDB file (gitignored)
-├── docker-compose.yml     # Redis + all Python services + dashboard
-├── Procfile               # Alternative orchestration
-└── pyproject.toml
+|--- config/
+|   |--- config.yaml
+|   |--- watchlist.yaml
+|   |--- schemas/
+|   |   |--- event_output.json
+|   |   `--- sentiment_output.json
+|   `--- .env.example
+|--- src/
+|   |--- collectors/        # 8 collector services
+|   |--- nlp/               # preprocessor, codex, ollama, image analysis
+|   |--- signals/           # fast, momentum, regime, conflict resolver
+|   |--- portfolio/         # sizing, correlation, exits, circuit breaker
+|   |--- execution/         # executor, fill tracker, alerting
+|   |--- storage/           # redis helpers, duckdb store, drain worker
+|   |--- backtest/          # vectorbt sweep, event replay, benchmarks
+|   `--- common/            # config loader, pydantic models, logging
+|--- dashboard/             # Next.js TypeScript app
+|--- data/                  # DuckDB file (gitignored)
+|--- docker-compose.yml     # Redis + all Python services + dashboard
+|--- Procfile               # Alternative orchestration
+`--- pyproject.toml
 ```
 
 ### Service Map
@@ -501,7 +501,7 @@ momentum-trader/
 | 13 | `regime-detector` | `src.signals.regime_detector` | Macro regime classification |
 | 14 | `portfolio-manager` | `src.portfolio.position_sizer` | Sizing + correlation + circuit breaker |
 | 15 | `executor` | `src.execution.executor` | Order routing + fill tracking + alerting |
-| 16 | `drain-worker` | `src.storage.drain_worker` | Redis → DuckDB continuous sync |
+| 16 | `drain-worker` | `src.storage.drain_worker` | Redis -> DuckDB continuous sync |
 | 17 | `api-server` | `src.api.server` | REST + WebSocket backend for dashboard |
 | 18 | `dashboard` | `dashboard/` (Next.js) | Web UI |
 ```

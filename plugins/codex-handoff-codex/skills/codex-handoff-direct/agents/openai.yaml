@@ -1,0 +1,6 @@
+interface:
+  display_name: "Codex Handoff Direct"
+  short_description: "Execute ready coding plans directly in Codex with escalation gates"
+  default_prompt: "Run this coding plan with Codex Handoff direct mode."
+policy:
+  allow_implicit_invocation: false

@@ -13,7 +13,7 @@ A simple Node.js CLI tool that reads a markdown file, extracts all links, and ch
 - Create `tsconfig.json` with `target: "ES2022"`, `module: "NodeNext"`, `outDir: "dist/"`
 - Add `build` and `start` scripts to `package.json`
 
-### 2. Create link checker — `src/check-links.ts`
+### 2. Create link checker - `src/check-links.ts`
 
 - Read a markdown file from disk
 - Extract all links using regex: `\[.*?\]\((https?:\/\/[^\)]+)\)`
@@ -21,7 +21,7 @@ A simple Node.js CLI tool that reads a markdown file, extracts all links, and ch
 - Collect results: `{ url, status, ok }`
 - Export `checkLinks(filePath: string)` function
 
-### 3. Add CLI argument parsing — `src/cli.ts`
+### 3. Add CLI argument parsing - `src/cli.ts`
 
 - Read file path from `process.argv[2]`
 - Print usage if no argument provided
@@ -34,7 +34,7 @@ A simple Node.js CLI tool that reads a markdown file, extracts all links, and ch
 - Red X for broken links (status 400+ or network error)
 - Summary line: "X of Y links valid"
 
-### 5. Add tests — `src/check-links.test.ts`
+### 5. Add tests - `src/check-links.test.ts`
 
 - `npm install -D vitest`
 - Test: extracts links from markdown string

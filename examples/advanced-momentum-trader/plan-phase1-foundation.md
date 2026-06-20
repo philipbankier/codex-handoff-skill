@@ -1,8 +1,8 @@
-# Momentum Trader — Plan 1: Foundation
+# Momentum Trader - Plan 1: Foundation
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Scaffold the project, config system, Pydantic data models, Redis Streams helpers, and DuckDB storage layer — the foundation every other subsystem depends on.
+**Goal:** Scaffold the project, config system, Pydantic data models, Redis Streams helpers, and DuckDB storage layer - the foundation every other subsystem depends on.
 
 **Architecture:** A Python monorepo with independent service processes communicating via Redis Streams. DuckDB provides analytical storage. Config is loaded from YAML + `.env`. All data structures are defined as Pydantic models for validation across service boundaries.
 
@@ -11,7 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-03-12-momentum-trader-design.md`
 
 **Plan series:**
-- **Plan 1: Foundation** ← you are here
+- **Plan 1: Foundation** <- you are here
 - Plan 2: Data Collectors
 - Plan 3: NLP Engine
 - Plan 4: Signal Generation
@@ -427,7 +427,7 @@ risk:
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/common/test_config.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'src.common.config'`
+Expected: FAIL - `ModuleNotFoundError: No module named 'src.common.config'`
 
 - [ ] **Step 3: Write minimal implementation**
 
@@ -577,7 +577,7 @@ def test_structured_log_format(capsys):
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `uv run pytest tests/common/test_logging.py -v`
-Expected: FAIL — `ModuleNotFoundError`
+Expected: FAIL - `ModuleNotFoundError`
 
 - [ ] **Step 3: Write minimal implementation**
 
@@ -614,7 +614,7 @@ class JSONFormatter(logging.Formatter):
 def setup_logging(level: str = "INFO") -> None:
     """Configure root logger with JSON formatter on stderr.
 
-    Safe to call multiple times — clears and reconfigures handlers each time.
+    Safe to call multiple times - clears and reconfigures handlers each time.
     """
     handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(JSONFormatter())
@@ -986,7 +986,7 @@ def test_fear_greed_index_out_of_range():
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/common/test_models.py -v`
-Expected: FAIL — `ModuleNotFoundError`
+Expected: FAIL - `ModuleNotFoundError`
 
 - [ ] **Step 3: Write implementation**
 
@@ -1367,7 +1367,7 @@ def test_publish_raw_dict(fake_redis):
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/storage/test_redis_streams.py -v`
-Expected: FAIL — `ModuleNotFoundError`
+Expected: FAIL - `ModuleNotFoundError`
 
 - [ ] **Step 3: Write implementation**
 
@@ -1679,7 +1679,7 @@ def test_insert_signal(db):
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/storage/test_duckdb_store.py -v`
-Expected: FAIL — `ModuleNotFoundError`
+Expected: FAIL - `ModuleNotFoundError`
 
 - [ ] **Step 3: Write implementation**
 
@@ -1992,7 +1992,7 @@ git commit -m "feat: add DuckDB storage layer with schema and typed inserts"
 
 ---
 
-### Task 7: Drain Worker (Redis → DuckDB)
+### Task 7: Drain Worker (Redis -> DuckDB)
 
 **Files:**
 - Create: `src/storage/drain_worker.py`
@@ -2087,14 +2087,14 @@ def test_drain_empty_stream(fake_redis, db):
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `uv run pytest tests/storage/test_drain_worker.py -v`
-Expected: FAIL — `ModuleNotFoundError`
+Expected: FAIL - `ModuleNotFoundError`
 
 - [ ] **Step 3: Write implementation**
 
 Create `src/storage/drain_worker.py`:
 
 ```python
-"""Drain worker: continuously syncs Redis Streams → DuckDB.
+"""Drain worker: continuously syncs Redis Streams -> DuckDB.
 
 Runs every 60 seconds (configurable). Reads unacknowledged messages
 from all streams and inserts them into the corresponding DuckDB tables.
@@ -2244,7 +2244,7 @@ Expected: All 3 tests PASS
 
 ```bash
 git add src/storage/drain_worker.py tests/storage/test_drain_worker.py
-git commit -m "feat: add drain worker for Redis → DuckDB sync"
+git commit -m "feat: add drain worker for Redis -> DuckDB sync"
 ```
 
 ---
@@ -2614,19 +2614,19 @@ git commit -m "feat: add Docker Compose, Dockerfile, and Procfile for orchestrat
 
 ---
 
-### Task 10: Integration test — full round-trip
+### Task 10: Integration test - full round-trip
 
 **Files:**
 - Create: `tests/test_integration_foundation.py`
 
-This test verifies the full data flow: config → model → Redis publish → consume → DuckDB drain.
+This test verifies the full data flow: config -> model -> Redis publish -> consume -> DuckDB drain.
 
 - [ ] **Step 1: Write the integration test**
 
 Create `tests/test_integration_foundation.py`:
 
 ```python
-"""Integration test: config → model → Redis → DuckDB round-trip."""
+"""Integration test: config -> model -> Redis -> DuckDB round-trip."""
 
 from datetime import datetime, timezone
 
@@ -2649,7 +2649,7 @@ def db(tmp_path):
 
 
 def test_full_round_trip(tmp_path, fake_redis, db):
-    """Data flows: config → model → Redis publish → consume → DuckDB."""
+    """Data flows: config -> model -> Redis publish -> consume -> DuckDB."""
     # 1. Load config
     from src.common.config import load_config, load_watchlist
 
@@ -2711,7 +2711,7 @@ Expected: All tests PASS (config: 5, logging: 2, models: 19, redis: 5, duckdb: 6
 
 ```bash
 git add tests/test_integration_foundation.py
-git commit -m "feat: add integration test for full config → Redis → DuckDB round-trip"
+git commit -m "feat: add integration test for full config -> Redis -> DuckDB round-trip"
 ```
 
 ---
@@ -2725,9 +2725,9 @@ git commit -m "feat: add integration test for full config → Redis → DuckDB r
 - 16 Pydantic data models covering all cross-service contracts (including MacroIndicator, FearGreedIndex)
 - Redis Streams publish/consume helpers (with fakeredis for testing)
 - DuckDB storage with 13 tables matching the spec schema
-- Drain worker (Redis → DuckDB sync)
+- Drain worker (Redis -> DuckDB sync)
 - Codex CLI JSON output schemas
 - Docker Compose + Dockerfile + Procfile for orchestration
 - Integration test proving the full data flow
 
-**Next plan:** Plan 2: Data Collectors — implements all 8 collector services on top of this foundation.
+**Next plan:** Plan 2: Data Collectors - implements all 8 collector services on top of this foundation.

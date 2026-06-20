@@ -1,137 +1,221 @@
 # Prompt Templates
 
-Templates used by the supervisor to construct Codex CLI prompts.
+The supervisor writes contract-shaped prompt files for Codex CLI. The contract makes scope, evidence, and stop conditions explicit before execution.
 
 ## Initial Execution Prompt
 
-Create a structured prompt file at `/tmp/codex-handoff-{timestamp}.md` with this format:
+Create the prompt file with `mktemp`:
 
-```markdown
-# Task
+```bash
+prompt_file="$(mktemp -t codex-handoff.XXXXXX.md)"
+```
 
-You are executing a coding plan. Complete ALL items below. Do not skip any steps.
+Write the rendered contract to `$prompt_file`, then run Codex with that file as stdin.
+
+````markdown
+# Codex Executor Contract
+
+## Goal
+
+{one-paragraph goal}
+
+## Context
+
+- Target directory: {absolute target_dir}
+- Plan path: {plan path or inline}
+- Plan phase: {all | phase N of total}
+- Baseline branch: {branch}
+- Baseline dirty files:
+  ```text
+  {git status --short output}
+  ```
+- Package manager: {detected from lockfile, or unknown}
+- Relevant supervisor notes: {short summary only when needed}
+
+Codex should rely on project AGENTS.md auto-discovery for local instructions. Do not assume pasted instruction files are complete.
+
+## Constraints
+
+- Work only on the goal and plan below.
+- Keep changes minimal and match existing style.
+- Do not make unrelated cleanups.
+- Do not hardcode secrets or credentials.
+- Do not use destructive commands.
+- Stop before any command that requires permissions outside the workspace sandbox.
+
+## Allowed Scope
+
+- Files/directories allowed: {explicit scope}
+- Files/directories off limits: {explicit exclusions}
+- For phased execution, do not work outside this phase unless required by this phase.
+
+## Done When
+
+- Every scoped plan item is done.
+- Verification commands below pass.
+- The git diff contains no unplanned changes.
+- Any skipped check has a clear reason.
+
+## Verification Commands
+
+Run these commands and report each exact command with its exit code:
+
+```bash
+{command 1}
+{command 2}
+```
+
+If no checks are configured, say that explicitly and provide the best available evidence from the diff. Do not claim verified completion without meaningful checks.
+
+## Stop Conditions
+
+Stop and report instead of guessing if:
+
+- required credentials, environment variables, or external services are missing
+- the plan conflicts with repository instructions
+- the scope needs files outside the allowed scope
+- a command needs permissions outside the workspace sandbox
+- verification cannot run and no reasonable alternate evidence exists
+
+## Escalation Contract
+
+Stop and report `ESCALATION_REQUIRED` when an assumption is overturned or a strategic decision is needed.
+
+Include:
+
+- facts with command output or diff evidence
+- impacted plan item or constraint
+- 2-3 realistic options
+- recommended default action
+- safe-to-continue scope
 
 ## Plan
 
 {FULL PLAN CONTENT HERE}
+````
 
-## Project Context
+## Context Collection
 
-- Working directory: {pwd}
-- Package manager: {npm/yarn/pnpm/bun — detect from lockfile}
-- Test command: {from package.json scripts or plan}
-- Build command: {from package.json scripts or plan}
+Before building the prompt:
 
-## Coding Standards
+- Capture branch, `git status --short`, dirty files, plan path, and phase.
+- Detect verification commands from `script/` or `scripts/` first, then repo docs, package files, and the plan.
+- Summarize only the local instructions that are directly relevant and not already handled by Codex AGENTS.md auto-discovery.
+- Do not paste full local instruction files by default.
 
-{Contents of CLAUDE.md or .codex/AGENTS.md if they exist, otherwise omit}
+Run with:
 
-## Instructions
-
-1. Implement each plan item in order
-2. After each significant change, run the test command to verify
-3. Write clean, minimal code — follow existing patterns in the codebase
-4. Do NOT add unnecessary comments, docs, or abstractions beyond what the plan specifies
-5. When ALL items are complete and tests pass, output: CODEX_COMPLETE
-6. If you get stuck on an item, implement what you can and note what failed
-```
-
-### Context Collection
-
-Before building the prompt, collect:
-- Read `CLAUDE.md` if it exists (for coding standards)
-- Read `.codex/AGENTS.md` if it exists
-- Detect test/build commands from `package.json`
-
-## Correction Prompt (for re-runs)
-
-When items remain incomplete after a Codex iteration, write a correction prompt to `/tmp/codex-handoff-correction-{timestamp}.md`:
-
-```markdown
-# Correction — Iteration {N+1}
-
-## What was completed successfully
-{list completed items}
-
-## What still needs to be done
-{list remaining items with specific instructions}
-
-## Errors to fix
-{test failures, build errors, or issues found in review}
-
-## Important
-- Focus ONLY on the remaining items — do not redo completed work
-- Run tests after each fix
-- When ALL remaining items are complete and tests pass, output: CODEX_COMPLETE
-```
-
-Then re-run:
 ```bash
-codex exec --full-auto -s workspace-write < /tmp/codex-handoff-correction-{timestamp}.md
+codex exec -C "{target_dir}" --sandbox workspace-write < "$prompt_file"
+```
+
+Add `-m MODEL` only after local verification that the installed Codex CLI and account support that model.
+Remove the prompt file after review unless the user asks to keep it for debugging.
+
+## Correction Prompt
+
+When review finds remaining work, create a correction prompt with `mktemp`:
+
+```bash
+prompt_file="$(mktemp -t codex-handoff-correction.XXXXXX.md)"
+```
+
+Write the rendered correction contract to `$prompt_file`, then run Codex with that file as stdin.
+
+````markdown
+# Codex Correction Contract
+
+## Goal
+
+Finish the remaining scoped work from iteration {N}.
+
+## Context
+
+- Target directory: {absolute target_dir}
+- Plan path: {plan path}
+- Plan phase: {all | phase N}
+- Previous iteration exit code: {exit code}
+- Current dirty files:
+  ```text
+  {git status --short output}
+  ```
+
+## Completed Items
+
+{supervisor-owned list of completed items}
+
+## Remaining Items
+
+{specific remaining plan items}
+
+## Issues To Fix
+
+{test failures, build errors, unplanned diffs, or review findings}
+
+## Constraints
+
+- Focus only on remaining items.
+- Preserve completed work unless it is directly blocking verification.
+- Do not touch files outside allowed scope.
+
+## Allowed Scope
+
+{allowed files/directories}
+
+## Done When
+
+- Remaining items are done.
+- Verification commands pass.
+- Unplanned diff audit is clean.
+
+## Verification Commands
+
+Report exact commands and exit codes:
+
+```bash
+{command 1}
+{command 2}
+```
+
+## Stop Conditions
+
+Stop if credentials, permissions, scope, or ambiguous requirements block progress.
+
+## Escalation Contract
+
+Stop and report `ESCALATION_REQUIRED` when an assumption is overturned or a strategic decision is needed.
+
+Include:
+
+- facts with command output or diff evidence
+- impacted plan item or constraint
+- 2-3 realistic options
+- recommended default action
+- safe-to-continue scope
+````
+
+Run with:
+
+```bash
+codex exec -C "{target_dir}" --sandbox workspace-write < "$prompt_file"
 ```
 
 ## Phase-Scoped Execution Prompt
 
-When the plan has multiple phases (auto-detected from headings), use this template instead of the full-plan template. Create at `/tmp/codex-handoff-phase-{N}-{timestamp}.md`:
+For phased plans, use the initial template with these substitutions:
 
-```markdown
-# Task — Phase {N} of {total}: {phase_title}
+- `Goal`: "Complete Phase {N} of {total}: {phase_title}."
+- `Plan phase`: "Phase {N} of {total}."
+- `Plan`: include only the current phase content.
+- `Context`: include brief summaries of completed phases, not their full text.
+- `Allowed Scope`: limit work to the current phase.
+- `Done When`: current phase items are done and verification passes.
 
-You are executing Phase {N} of a multi-phase coding plan.
-Complete ALL items in this phase. Do not work on items from other phases.
+## Phase Correction Prompt
 
-## This Phase
+Use the correction template, scoped to the current phase:
 
-{PHASE CONTENT ONLY — everything under this phase's heading until the next phase heading}
-
-## Completed Phases (for context)
-
-{For each previously completed phase, list:
-- Phase title
-- Brief summary of what was implemented
-- Key files created or modified
-Do NOT include the full content of previous phases.}
-
-## Project Context
-
-- Working directory: {pwd}
-- Package manager: {npm/yarn/pnpm/bun — detect from lockfile}
-- Test command: {from package.json scripts or plan}
-- Build command: {from package.json scripts or plan}
-
-## Coding Standards
-
-{Contents of CLAUDE.md or .codex/AGENTS.md if they exist, otherwise omit}
-
-## Instructions
-
-1. Implement each item in this phase in order
-2. After each significant change, run the test command to verify
-3. Write clean, minimal code — follow existing patterns in the codebase
-4. Do NOT touch files or functionality outside this phase's scope unless required by this phase's items
-5. When ALL items in this phase are complete and tests pass, output: PHASE_COMPLETE
-6. If you get stuck on an item, implement what you can and note what failed
-```
-
-### Phase Correction Prompt
-
-Same as the single-pass correction prompt, but scoped to the current phase:
-
-```markdown
-# Correction — Phase {N}, Iteration {M+1}
-
-## What was completed successfully in this phase
-{list completed items from this phase only}
-
-## What still needs to be done in this phase
-{list remaining items with specific instructions}
-
-## Errors to fix
-{test failures, build errors, or issues found in review}
-
-## Important
-- Focus ONLY on the remaining items in this phase
-- Do not redo completed work from this or previous phases
-- Run tests after each fix
-- When ALL remaining items in this phase are complete and tests pass, output: PHASE_COMPLETE
-```
+- completed items from this phase only
+- remaining items from this phase only
+- completed phase summaries for prior phases
+- no work on future phases unless the current phase explicitly requires it

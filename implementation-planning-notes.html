@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>codex-handoff 1.2.0 Implementation Planning Notes</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      max-width: 920px;
+      margin: 40px auto;
+      padding: 0 24px 48px;
+      color: #17202a;
+      background: #fbfbf8;
+    }
+    h1, h2 {
+      line-height: 1.2;
+    }
+    code {
+      background: #ece8dd;
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    li {
+      margin: 6px 0;
+    }
+    .note {
+      border-left: 4px solid #4f7cac;
+      background: #f1f5f8;
+      padding: 12px 16px;
+      margin: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>codex-handoff 1.2.0 Implementation Planning Notes</h1>
+
+  <p class="note">
+    These notes track how the implementation plan interprets or tightens the approved
+    design spec at <code>docs/superpowers/specs/2026-06-20-codex-handoff-1-2-0-design.md</code>.
+    They include plan-level decisions; artifacts assigned to later tasks remain planned
+    until those tasks create them.
+  </p>
+
+  <h2>Design Decisions</h2>
+  <ul>
+    <li>The plan treats the existing Claude Code/OpenClaw skill as the stable surface and creates a separate Codex direct skill under the Codex plugin. This avoids recursive <code>codex exec</code> behavior inside Codex.</li>
+    <li>The Codex direct skill gets its own references instead of symlinking to the Claude references. The two paths share concepts, but their runtime instructions differ enough that duplicated small reference files are safer for 1.2.0.</li>
+    <li>The release verification command is planned as <code>scripts/verify-release.sh</code>, not a package-managed test harness. This matches the repo rule against adding app code or build tooling.</li>
+    <li>The eval fixture is planned as <code>evals/evals.json</code> only. The release gets test cases for future evaluation, not a custom runner.</li>
+    <li>The eval fixture uses plain JSON cases instead of a runner so 1.2.0 gains testable scenarios without adding a custom harness.</li>
+    <li>The stable Claude path now gets its own escalation reference so users see the same escalation vocabulary before they try the experimental Codex path.</li>
+    <li>The plan includes an explicit stable-path escalation reference at <code>skills/codex-handoff/references/escalation-policy.md</code> even though the spec emphasizes the direct Codex path. This keeps both surfaces aligned on escalation vocabulary.</li>
+    <li><code>scripts/verify-install.sh</code> is included in Task 1 because the plan listed it as an existing refresh diff and Task 1 verification scans <code>scripts</code> for stale patterns, even though the original staging command omitted it.</li>
+    <li>The plan includes cleanup of <code>examples/simple/README.md</code> because it still teaches stale automatic-execution and sentinel behavior that conflicts with 1.2.0.</li>
+    <li>Task 2 marketplace metadata was corrected to the current Codex <code>source</code> schema after local CLI verification, and the plugin path is repo-root relative at <code>./plugins/codex-handoff-codex</code>.</li>
+    <li>Task 6 stores final release evidence in <code>docs/releases/1.2.0-verification.md</code> so reviewers can see exact command exits and concrete verification limits without rerunning the full checklist.</li>
+    <li>Task 6 treats ASCII normalization as mechanical cleanup across tracked scanned files. The broad stale-literal scan still reports the untracked release plan under <code>docs/superpowers/plans/</code>, which is outside the allowed edit scope.</li>
+    <li>Philip approved treating <code>docs/superpowers/plans/</code> as off-limits planning input rather than release output for the final stale-literal scan.</li>
+    <li>The pre-merge audit follow-up promotes install-verifier regression checks and Codex plugin install smoke into <code>scripts/verify-release.sh</code> because release evidence should not rely on one-off manual proof.</li>
+    <li>The canonical GitHub repository for docs and plugin metadata is <code>philipbankier/codex-handoff-skill</code>; the old <code>philipbankier/codex-handoff</code> URL redirects but is treated as stale release metadata.</li>
+    <li>The install verifier now treats a detected OpenClaw config directory with no codex-handoff skill as a failure, while keeping the no-OpenClaw-detected case as a non-failing skip.</li>
+    <li>The release verifier distinguishes <code>rg</code> exit code <code>1</code> for no matches from other scan errors so stale-pattern and secret scans cannot pass on tool failure.</li>
+  </ul>
+
+  <h2>Deviations From The Spec</h2>
+  <ul>
+    <li>No intentional product-scope departures. The implementation plan keeps Grok, GLM, MCP, hooks, Claude plugin packaging, app code, <code>package.json</code>, and public marketplace publishing out of 1.2.0.</li>
+    <li>The plan treats exact Codex marketplace install commands as verification-time facts, not hardcoded assumptions. Local help shows <code>codex plugin marketplace add|upgrade|remove</code>, but workers must still check the active CLI before documenting commands.</li>
+    <li>The plan allows the existing unstaged documentation refresh to be incorporated instead of restarted. The worker must review the diff and preserve good changes while completing the 1.2.0 scope.</li>
+  </ul>
+
+  <h2>Tradeoffs</h2>
+  <ul>
+    <li>Separate Codex and Claude skill trees create some duplication, but avoid runtime confusion and make each skill readable by the agent that will actually execute it.</li>
+    <li>The Codex plugin duplicates some stable-path references because direct Codex execution must not inherit Claude supervisor wording or call <code>codex exec</code> recursively.</li>
+    <li>A small eval fixture is less powerful than a real harness, but avoids adding a dependency surface to an instruction/script repository.</li>
+    <li>A shell release verifier is less expressive than a Node or Python tool, but keeps the repository aligned with its current shell-script conventions.</li>
+    <li>The release verifier uses <code>python3 -m json.tool</code> for JSON validation because the repo has no package manager and should not add one for 1.2.0.</li>
+    <li>Deferring Claude plugin packaging keeps 1.2.0 focused. The symlink install already covers Claude Code, while Codex plugin packaging is the new release surface.</li>
+    <li>The release verifier now requires the Codex CLI for plugin smoke testing. That makes the release gate less portable, but matches the release claim that the Codex plugin is ready to install.</li>
+  </ul>
+
+  <h2>Open Questions</h2>
+  <ul>
+    <li>Whether the final release should commit the already-untracked <code>AGENTS.md</code>. The plan leaves it untouched unless the user explicitly approves adding it.</li>
+    <li>Whether to open a PR after the pre-merge audit fix lands. The fix commit will stay on the feature branch; PR creation remains a separate step unless requested.</li>
+    <li>Whether to add Claude plugin packaging in a later release. The plan explicitly defers it from 1.2.0.</li>
+  </ul>
+</body>
+</html>
