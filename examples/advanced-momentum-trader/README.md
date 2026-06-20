@@ -4,8 +4,8 @@ This is a real-world example of a complex multi-phase project built with codex-h
 
 ## What's Here
 
-- [`design-spec.md`](design-spec.md) — Full design specification for an event-driven momentum trading system (equities + crypto)
-- [`plan-phase1-foundation.md`](plan-phase1-foundation.md) — Phase 1 implementation plan: project scaffolding, config system, data models, Redis Streams, DuckDB storage
+- [`design-spec.md`](design-spec.md) - Full design specification for an event-driven momentum trading system (equities + crypto)
+- [`plan-phase1-foundation.md`](plan-phase1-foundation.md) - Phase 1 implementation plan: project scaffolding, config system, data models, Redis Streams, DuckDB storage
 
 ## The Project
 
@@ -16,7 +16,7 @@ An event-driven momentum trading system that combines:
 - Dual-timeframe signal generation (fast intraday + daily/weekly momentum)
 - Risk-managed portfolio execution via Alpaca
 
-The full system spans 7 implementation plans — this example includes the design spec and Phase 1 (Foundation).
+The full system spans 7 implementation plans - this example includes the design spec and Phase 1 (Foundation).
 
 ## How codex-handoff Handles This
 
@@ -25,7 +25,7 @@ The full system spans 7 implementation plans — this example includes the desig
 Large projects like this are broken into separate plan files, each handed off independently:
 
 ```
-Plan 1: Foundation        ← included here
+Plan 1: Foundation        <- included here
 Plan 2: Data Collectors
 Plan 3: NLP Engine
 Plan 4: Signal Generation
@@ -34,7 +34,7 @@ Plan 6: Dashboard
 Plan 7: Backtesting
 ```
 
-Each plan is executed with `/codex-handoff`, and the agent runs the full supervisor loop (execute → review → correct → repeat) for each one.
+Each plan is executed with `/codex-handoff`, and the agent runs the full supervisor loop (execute -> review -> correct -> repeat) for each one.
 
 ### Within-plan phased execution
 
@@ -42,10 +42,10 @@ Each plan can itself contain phases (using `## Phase N:` headings). When codex-h
 
 ### Why this matters
 
-- **Context efficiency** — Codex gets a focused prompt for each phase, not the entire spec
-- **Dependency ordering** — Later phases build on earlier phases' output
-- **Failure isolation** — A failed phase can be re-run with `--phase N` without re-doing everything
-- **Progress visibility** — Per-phase scorecards show exactly where things stand
+- **Context efficiency** - Codex gets a focused prompt for each phase, not the entire spec
+- **Dependency ordering** - Later phases build on earlier phases' output
+- **Failure isolation** - A failed phase can be re-run with `--phase N` without re-doing everything
+- **Progress visibility** - Per-phase scorecards show exactly where things stand
 
 ## How This Was Built
 

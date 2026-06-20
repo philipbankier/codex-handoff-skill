@@ -1,10 +1,12 @@
 # Simple Walkthrough: Markdown Link Checker
 
-This is a real captured transcript of codex-handoff executing a plan end-to-end. Every output shown below — the Codex CLI logs, git diffs, test results, and scorecard — was captured from an actual execution on 2026-03-14.
+This is a real captured transcript of codex-handoff executing a plan end-to-end. Every output shown below - the Codex CLI logs, git diffs, test results, and scorecard - was captured from an actual execution on 2026-03-14.
 
-The plan was created using [superpowers](https://github.com/obra/superpowers) `/writing-plans` and then handed off with "hand it off to codex" — the typical workflow for using codex-handoff. The brainstorming and planning happens in your agent, and once the plan is solid, one phrase kicks off the automated execution loop.
+This file is ASCII-normalized for release verification. Original checkmark glyphs are represented as `\u2713` in transcript snippets and source excerpts.
 
-The plan builds a simple Node.js CLI tool that checks markdown files for broken links. See [`plan.md`](plan.md) for the full plan — 5 items, no phases, single-pass mode. The complete source code Codex produced is in [`output/`](output/).
+The plan was created using [superpowers](https://github.com/obra/superpowers) `/writing-plans` and then handed off with "hand it off to codex" - the typical workflow for using codex-handoff. The brainstorming and planning happens in your agent, and once the plan is solid, one phrase kicks off the automated execution loop.
+
+The plan builds a simple Node.js CLI tool that checks markdown files for broken links. See [`plan.md`](plan.md) for the full plan - 5 items, no phases, single-pass mode. The complete source code Codex produced is in [`output/`](output/).
 
 ---
 
@@ -14,14 +16,14 @@ When you run `/codex-handoff`, the agent searches for a plan file. It finds `pla
 
 > **Claude Code:**
 >
-> Found plan: `plan.md` — **Markdown Link Checker CLI**
+> Found plan: `plan.md` - **Markdown Link Checker CLI**
 >
-> **5 items detected** (no phase headings → single-pass mode):
+> **5 items detected** (no phase headings -> single-pass mode):
 > 1. Initialize npm project with TypeScript
-> 2. Create link checker — `src/check-links.ts`
-> 3. Add CLI argument parsing — `src/cli.ts`
+> 2. Create link checker - `src/check-links.ts`
+> 3. Add CLI argument parsing - `src/cli.ts`
 > 4. Add colored output
-> 5. Add tests — `src/check-links.test.ts`
+> 5. Add tests - `src/check-links.test.ts`
 >
 > Ready to hand off to Codex CLI. Proceed?
 
@@ -53,7 +55,7 @@ You are executing a coding plan. Complete ALL items below. Do not skip any steps
 - Create `tsconfig.json` with `target: "ES2022"`, `module: "NodeNext"`, `outDir: "dist/"`
 - Add `build` and `start` scripts to `package.json`
 
-### 2. Create link checker — `src/check-links.ts`
+### 2. Create link checker - `src/check-links.ts`
 
 - Read a markdown file from disk
 - Extract all links using regex: `\[.*?\]\((https?:\/\/[^\)]+)\)`
@@ -61,7 +63,7 @@ You are executing a coding plan. Complete ALL items below. Do not skip any steps
 - Collect results: `{ url, status, ok }`
 - Export `checkLinks(filePath: string)` function
 
-### 3. Add CLI argument parsing — `src/cli.ts`
+### 3. Add CLI argument parsing - `src/cli.ts`
 
 - Read file path from `process.argv[2]`
 - Print usage if no argument provided
@@ -74,7 +76,7 @@ You are executing a coding plan. Complete ALL items below. Do not skip any steps
 - Red X for broken links (status 400+ or network error)
 - Summary line: "X of Y links valid"
 
-### 5. Add tests — `src/check-links.test.ts`
+### 5. Add tests - `src/check-links.test.ts`
 
 - `npm install -D vitest`
 - Test: extracts links from markdown string
@@ -85,7 +87,7 @@ You are executing a coding plan. Complete ALL items below. Do not skip any steps
 ## Project Context
 
 - Working directory: /tmp/codex-handoff-demo-linkchecker
-- Package manager: npm (no lockfile detected — fresh project)
+- Package manager: npm (no lockfile detected - fresh project)
 - No existing test framework detected
 - No CLAUDE.md or coding standards found
 
@@ -93,7 +95,7 @@ You are executing a coding plan. Complete ALL items below. Do not skip any steps
 
 1. Implement each plan item in order
 2. After each significant change, run the test command to verify
-3. Write clean, minimal code — follow existing patterns in the codebase
+3. Write clean, minimal code - follow existing patterns in the codebase
 4. Do NOT add unnecessary comments, docs, or abstractions beyond what the plan specifies
 5. When ALL items are complete and tests pass, report exact verification evidence
 6. If you get stuck on an item, implement what you can and note what failed
@@ -119,9 +121,9 @@ codex> I'm executing the plan in order from the project root, starting by
        setup before moving on to the link checker and tests.
 
 Plan update
-  → Inspect workspace and initialize npm + TypeScript config
-  • Implement link checker and CLI with colored output
-  • Add Vitest tests and verify after each major change
+  -> Inspect workspace and initialize npm + TypeScript config
+  * Implement link checker and CLI with colored output
+  * Add Vitest tests and verify after each major change
 ```
 
 **npm init succeeds:**
@@ -136,7 +138,7 @@ Wrote to /private/tmp/codex-handoff-demo-linkchecker/package.json:
 }
 ```
 
-**npm install hits a sandbox restriction** — the Codex sandbox blocks network access to the npm registry:
+**npm install hits a sandbox restriction** - the Codex sandbox blocks network access to the npm registry:
 ```
 exec> npm install -D typescript @types/node tsx
 
@@ -195,9 +197,9 @@ codex> The checker, CLI, colored output, and tests are all implemented
        because direct registry installs were blocked in the sandbox.
 
 Plan update
-  ✓ Inspect workspace and initialize npm + TypeScript config
-  ✓ Implement link checker and CLI with colored output
-  ✓ Add Vitest tests and verify after each major change
+  \u2713 Inspect workspace and initialize npm + TypeScript config
+  \u2713 Implement link checker and CLI with colored output
+  \u2713 Add Vitest tests and verify after each major change
 ```
 
 Codex used **56,259 tokens** and completed in a single pass.
@@ -206,7 +208,7 @@ Codex used **56,259 tokens** and completed in a single pass.
 
 ## Step 4: Review
 
-The agent reviews what Codex produced — checking the git diff and running tests independently:
+The agent reviews what Codex produced - checking the git diff and running tests independently:
 
 > **Claude Code:**
 >
@@ -227,7 +229,7 @@ The agent reviews what Codex produced — checking the git diff and running test
 >
 >  RUN  v3.2.4 /private/tmp/codex-handoff-demo-linkchecker
 >
->  ✓ src/check-links.test.ts (3 tests) 12ms
+>  \u2713 src/check-links.test.ts (3 tests) 12ms
 >
 >  Test Files  1 passed (1)
 >       Tests  3 passed (3)
@@ -240,12 +242,12 @@ The agent reviews what Codex produced — checking the git diff and running test
 > | # | Item | Status |
 > |---|------|--------|
 > | 1 | Initialize npm project with TypeScript | DONE |
-> | 2 | Create link checker — `src/check-links.ts` | DONE |
-> | 3 | Add CLI argument parsing — `src/cli.ts` | DONE |
+> | 2 | Create link checker - `src/check-links.ts` | DONE |
+> | 3 | Add CLI argument parsing - `src/cli.ts` | DONE |
 > | 4 | Add colored output | DONE |
-> | 5 | Add tests — `src/check-links.test.ts` | DONE |
+> | 5 | Add tests - `src/check-links.test.ts` | DONE |
 >
-> **Result: 5/5 DONE, 3/3 tests passing — complete**
+> **Result: 5/5 DONE, 3/3 tests passing - complete**
 
 ---
 
@@ -266,10 +268,10 @@ All items passed on the first iteration, so no correction loop was needed:
 > | # | Item | Status |
 > |---|------|--------|
 > | 1 | Initialize npm project with TypeScript | DONE |
-> | 2 | Create link checker — `src/check-links.ts` | DONE |
-> | 3 | Add CLI argument parsing — `src/cli.ts` | DONE |
+> | 2 | Create link checker - `src/check-links.ts` | DONE |
+> | 3 | Add CLI argument parsing - `src/cli.ts` | DONE |
 > | 4 | Add colored output | DONE |
-> | 5 | Add tests — `src/check-links.test.ts` | DONE |
+> | 5 | Add tests - `src/check-links.test.ts` | DONE |
 >
 > **All 5 items complete.** Tests passing (3/3).
 >
@@ -277,9 +279,9 @@ All items passed on the first iteration, so no correction loop was needed:
 > ```
 > package.json
 > tsconfig.json
-> src/check-links.ts       (39 lines — link extraction + HTTP checking)
-> src/cli.ts               (36 lines — CLI with ANSI colored output)
-> src/check-links.test.ts  (82 lines — 3 vitest tests with fetch mocking)
+> src/check-links.ts       (39 lines - link extraction + HTTP checking)
+> src/cli.ts               (36 lines - CLI with ANSI colored output)
+> src/check-links.test.ts  (82 lines - 3 vitest tests with fetch mocking)
 > ```
 >
 > Ready to review and commit.
@@ -333,7 +335,7 @@ const RED = "\x1b[31m";
 const RESET = "\x1b[0m";
 
 function formatResult(ok: boolean): string {
-  return ok ? `${GREEN}✓${RESET}` : `${RED}X${RESET}`;
+  return ok ? `${GREEN}\u2713${RESET}` : `${RED}X${RESET}`;
 }
 
 const filePath = process.argv[2];
@@ -399,12 +401,12 @@ describe("checkLinks", () => {
 
 ## Key Takeaways
 
-1. **Single-iteration completion** — For this simple 5-item plan, Codex completed everything in one pass. The correction loop exists for when items are missed, but simple plans often don't need it.
+1. **Single-iteration completion** - For this simple 5-item plan, Codex completed everything in one pass. The correction loop exists for when items are missed, but simple plans often don't need it.
 
-2. **Sandbox adaptation** — The Codex sandbox blocked npm registry access (network isolation). Codex autonomously discovered packages in the local bun cache and wired up `file:` references. This is a real-world wrinkle you'll encounter — Codex is resourceful about working within its constraints.
+2. **Sandbox adaptation** - The Codex sandbox blocked npm registry access (network isolation). Codex autonomously discovered packages in the local bun cache and wired up `file:` references. This is a real-world wrinkle you'll encounter - Codex is resourceful about working within its constraints.
 
-3. **Scorecard-driven decisions** — After Codex finishes, the agent independently reviews the diff and runs tests. Each plan item is scored as DONE, PARTIAL, or MISSING. If anything is incomplete, the agent builds a targeted correction prompt and loops.
+3. **Scorecard-driven decisions** - After Codex finishes, the agent independently reviews the diff and runs tests. Each plan item is scored as DONE, PARTIAL, or MISSING. If anything is incomplete, the agent builds a targeted correction prompt and loops.
 
-4. **You stay in control** — The agent asks for confirmation before starting, shows you the scorecard after each iteration, and presents a final report. You decide when to commit.
+4. **You stay in control** - The agent asks for confirmation before starting, shows you the scorecard after each iteration, and presents a final report. You decide when to commit.
 
-5. **The generated code is clean** — Codex produced well-structured TypeScript: a focused module (`check-links.ts`), a separate CLI entry point (`cli.ts`) with ANSI colors, and thorough tests with proper fetch mocking. No unnecessary abstractions or over-engineering.
+5. **The generated code is clean** - Codex produced well-structured TypeScript: a focused module (`check-links.ts`), a separate CLI entry point (`cli.ts`) with ANSI colors, and thorough tests with proper fetch mocking. No unnecessary abstractions or over-engineering.

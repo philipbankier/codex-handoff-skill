@@ -88,7 +88,20 @@ else
   fail "python3 missing; cannot validate JSON files"
 fi
 
-if rg -n "full-auto|o4-mini|npm install -g|CODEX_COMPLETE|PHASE_COMPLETE|\\.codex/AGENTS" \
+flag_prefix="full"
+flag_suffix="auto"
+model_prefix="o4"
+model_suffix="mini"
+npm_install="npm install"
+global_flag="-g"
+codex_token_prefix="CODEX"
+phase_token_prefix="PHASE"
+complete_token_suffix="COMPLETE"
+codex_dir="\\.codex"
+agents_file="AGENTS"
+stale_pattern="${flag_prefix}-${flag_suffix}|${model_prefix}-${model_suffix}|${npm_install} ${global_flag}|${codex_token_prefix}_${complete_token_suffix}|${phase_token_prefix}_${complete_token_suffix}|${codex_dir}/${agents_file}"
+
+if rg -n "$stale_pattern" \
   README.md skills/codex-handoff commands scripts plugins evals examples/simple/README.md; then
   fail "stale workflow pattern found"
 else

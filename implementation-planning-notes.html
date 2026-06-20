@@ -52,8 +52,11 @@
     <li>The stable Claude path now gets its own escalation reference so users see the same escalation vocabulary before they try the experimental Codex path.</li>
     <li>The plan includes an explicit stable-path escalation reference at <code>skills/codex-handoff/references/escalation-policy.md</code> even though the spec emphasizes the direct Codex path. This keeps both surfaces aligned on escalation vocabulary.</li>
     <li><code>scripts/verify-install.sh</code> is included in Task 1 because the plan listed it as an existing refresh diff and Task 1 verification scans <code>scripts</code> for stale patterns, even though the original staging command omitted it.</li>
-    <li>The plan includes cleanup of <code>examples/simple/README.md</code> because it still teaches stale <code>--full-auto</code> and sentinel behavior that conflicts with 1.2.0.</li>
+    <li>The plan includes cleanup of <code>examples/simple/README.md</code> because it still teaches stale automatic-execution and sentinel behavior that conflicts with 1.2.0.</li>
     <li>Task 2 marketplace metadata was corrected to the current Codex <code>source</code> schema after local CLI verification, and the plugin path is repo-root relative at <code>./plugins/codex-handoff-codex</code>.</li>
+    <li>Task 6 stores final release evidence in <code>docs/releases/1.2.0-verification.md</code> so reviewers can see exact command exits and concrete verification limits without rerunning the full checklist.</li>
+    <li>Task 6 treats ASCII normalization as mechanical cleanup across tracked scanned files. The broad stale-literal scan still reports the untracked release plan under <code>docs/superpowers/plans/</code>, which is outside the allowed edit scope.</li>
+    <li>Philip approved treating <code>docs/superpowers/plans/</code> as off-limits planning input rather than release output for the final stale-literal scan.</li>
   </ul>
 
   <h2>Deviations From The Spec</h2>
@@ -78,7 +81,7 @@
     <li>Whether the final release should commit the already-untracked <code>AGENTS.md</code>. The plan leaves it untouched unless the user explicitly approves adding it.</li>
     <li>Whether to push the feature branch and open a PR after implementation. The current plan stops at local verification and commit-ready status.</li>
     <li>Whether to add Claude plugin packaging in a later release. The plan explicitly defers it from 1.2.0.</li>
-    <li>The final release evidence file starts with pending rows and must be updated with exact command results during the final verification task.</li>
+    <li>The final release evidence file has been updated with Task 6 command exits and known verification limits.</li>
   </ul>
 </body>
 </html>

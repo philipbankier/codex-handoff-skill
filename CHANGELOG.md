@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Split stable Claude-supervisor docs from experimental Codex-direct docs
 
 ### Removed
-- Stale `--full-auto`, sentinel completion, and npm-only install guidance from primary docs
+- Stale automatic-execution flag, sentinel completion, and npm-only install guidance from primary docs
 
 ## [1.1.1] - 2026-03-13
 

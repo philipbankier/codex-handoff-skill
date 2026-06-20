@@ -5,7 +5,7 @@ const RED = "\x1b[31m";
 const RESET = "\x1b[0m";
 
 function formatResult(ok: boolean): string {
-  return ok ? `${GREEN}✓${RESET}` : `${RED}X${RESET}`;
+  return ok ? `${GREEN}\u2713${RESET}` : `${RED}X${RESET}`;
 }
 
 const filePath = process.argv[2];

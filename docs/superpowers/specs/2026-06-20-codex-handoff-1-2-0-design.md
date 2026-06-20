@@ -143,7 +143,7 @@ It should check:
 - `commands/codex-handoff.md` is under 15 lines.
 - Markdown files in `skills/` and `commands/` have YAML frontmatter.
 - Shell scripts pass `bash -n`.
-- Stable stale terms are absent where they should be absent: `full-auto`, `o4-mini`, `npm install -g`, `CODEX_COMPLETE`, `PHASE_COMPLETE`.
+- Stable stale terms are absent where they should be absent, including the old automatic-execution flag, retired small-model override, global npm install wording, and legacy completion sentinels.
 - Version is consistent across `SKILL.md`, README badge, `openclaw.yaml`, Codex plugin manifest, and `CHANGELOG.md`.
 - Codex plugin files exist.
 - `evals/evals.json` exists and is valid JSON.
